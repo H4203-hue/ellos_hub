@@ -93,6 +93,7 @@ export default function DevPage() {
   const [editVoice, setEditVoice] = useState<VoiceType>('Soprano');
   const [editRole, setEditRole] = useState<UserRole>('MEMBER');
   const [editIsActive, setEditIsActive] = useState<boolean>(true);
+  const [editPassword, setEditPassword] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const handleOpenEditModal = (member: GroupMember) => {
@@ -103,6 +104,7 @@ export default function DevPage() {
     setEditVoice(member.voice);
     setEditRole(member.role);
     setEditIsActive(member.isActive !== false);
+    setEditPassword('');
   };
 
   const handleSaveEditMember = async (e: React.FormEvent) => {
@@ -123,28 +125,34 @@ export default function DevPage() {
           voice: editVoice,
           role: editRole,
           isActive: editIsActive,
+          password: editPassword.trim() || undefined,
         }),
       });
 
       const data = await res.json();
 
       if (data.success) {
+        const updatedObj: GroupMember = {
+          ...editingMember,
+          name: editName.trim(),
+          email: editEmail.trim().toLowerCase(),
+          phone: editPhone.trim(),
+          voice: editVoice,
+          role: editRole,
+          isActive: editIsActive,
+        };
+
         setMembersList((prev) =>
-          prev.map((m) =>
-            m.id === editingMember.id
-              ? {
-                  ...m,
-                  name: editName.trim(),
-                  email: editEmail.trim().toLowerCase(),
-                  phone: editPhone.trim(),
-                  voice: editVoice,
-                  role: editRole,
-                  isActive: editIsActive,
-                }
-              : m
-          )
+          prev.map((m) => (m.id === editingMember.id ? updatedObj : m))
         );
-        toast.success(`✨ Dados de ${editName} atualizados com sucesso!`);
+
+        // Atualizar sessão local se for o próprio integrante logado
+        if (currentMember?.id === editingMember.id) {
+          setCurrentMember(updatedObj);
+          localStorage.setItem('ellos_current_member', JSON.stringify(updatedObj));
+        }
+
+        toast.success(`✨ Dados de ${editName} salvos e sincronizados com Supabase Auth!`);
         setEditingMember(null);
       } else {
         toast.error(data.error || 'Erro ao atualizar dados.');
@@ -1078,6 +1086,21 @@ export default function DevPage() {
                     🔴 Inativo / Afastado
                   </button>
                 </div>
+              </div>
+
+              {/* Redefinição de Senha no Supabase Auth */}
+              <div className="space-y-1 pt-1">
+                <label className="font-semibold text-slate-300 flex items-center justify-between">
+                  <span>Nova Senha de Acesso (Opcional)</span>
+                  <span className="text-[10px] text-slate-400">Deixe em branco para manter a atual</span>
+                </label>
+                <input
+                  type="password"
+                  placeholder="•••••••• (deixe em branco se não for alterar)"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-950 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-gold-500/50"
+                />
               </div>
 
               {/* Botões de Ação */}

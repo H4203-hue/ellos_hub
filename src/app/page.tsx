@@ -72,27 +72,75 @@ export default function Home() {
   const canCreate = effectiveRole === 'ADM' || effectiveRole === 'DEV';
   const canAccessMedia = effectiveRole === 'MEDIA' || effectiveRole === 'ADM' || effectiveRole === 'DEV';
 
-  // Carregar membro salvo ou redirecionar para /login
+  // Carregar membro salvo ou verificar sessão ativa no Supabase Auth
   useEffect(() => {
-    try {
-      const localSavedStr = localStorage.getItem('ellos_current_member');
-      const sessionSavedStr = sessionStorage.getItem('ellos_current_member');
-      const savedMemberStr = localSavedStr || sessionSavedStr;
+    const initSession = async () => {
+      // 1. Inspecionar param ?login=success para toast de feedback
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('login') === 'success') {
+        toast.success('✨ Login realizado com sucesso!');
+        // Limpar URL mantendo histórico limpo
+        window.history.replaceState({}, '', window.location.pathname);
+      }
 
-      if (savedMemberStr) {
-        const parsed: GroupMember = JSON.parse(savedMemberStr);
-        if (parsed && parsed.name) {
-          setCurrentMember(parsed);
-          setSimulatedRole(parsed.role as 'DEV' | 'ADM' | 'MEDIA' | 'MEMBER');
-        } else {
-          router.replace('/login');
+      try {
+        const localSavedStr = localStorage.getItem('ellos_current_member');
+        const sessionSavedStr = sessionStorage.getItem('ellos_current_member');
+        const savedMemberStr = localSavedStr || sessionSavedStr;
+
+        if (savedMemberStr) {
+          const parsed: GroupMember = JSON.parse(savedMemberStr);
+          if (parsed && parsed.name) {
+            setCurrentMember(parsed);
+            setSimulatedRole(parsed.role as 'DEV' | 'ADM' | 'MEDIA' | 'MEMBER');
+            return;
+          }
         }
-      } else {
+
+        // 2. Se não houver localStorage, verificar sessão do Supabase Auth (ex: login com Google)
+        if (supabase && isSupabaseConfigured) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session?.user) {
+            const user = sessionData.session.user;
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id)
+              .single();
+
+            const googleMember: GroupMember = profile
+              ? {
+                  id: profile.id,
+                  email: profile.email,
+                  name: profile.name,
+                  voice: profile.voice,
+                  role: profile.role,
+                  phone: profile.phone,
+                  isActive: profile.is_active !== false,
+                }
+              : {
+                  id: user.id,
+                  email: user.email || '',
+                  name: user.user_metadata?.full_name || user.user_metadata?.name || 'Integrante',
+                  voice: 'Geral',
+                  role: 'MEMBER',
+                  isActive: true,
+                };
+
+            setCurrentMember(googleMember);
+            setSimulatedRole(googleMember.role as 'DEV' | 'ADM' | 'MEDIA' | 'MEMBER');
+            localStorage.setItem('ellos_current_member', JSON.stringify(googleMember));
+            return;
+          }
+        }
+
+        router.replace('/login');
+      } catch {
         router.replace('/login');
       }
-    } catch {
-      router.replace('/login');
-    }
+    };
+
+    initSession();
   }, [router]);
 
   const handleLogout = async () => {

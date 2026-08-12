@@ -90,7 +90,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, email, name, voice, role, phone, isActive } = body;
+    const { id, email, name, voice, role, phone, isActive, password } = body;
 
     if (!id && !email) {
       return NextResponse.json(
@@ -128,11 +128,17 @@ export async function PUT(req: Request) {
         .update(updatePayload)
         .eq('id', targetId);
 
-      // 2. Atualizar Metadata no Supabase Auth se aplicável
-      await supabaseAdmin.auth.admin.updateUserById(targetId, {
+      // 2. Atualizar Metadata e Senha no Supabase Auth se fornecida
+      const authUpdatePayload: Record<string, unknown> = {
         email: emailClean,
         user_metadata: { name, voice, role, phone },
-      }).catch((e) => console.warn('Auth update metadata warning:', e));
+      };
+      if (password && String(password).trim()) {
+        authUpdatePayload.password = String(password).trim();
+      }
+
+      await supabaseAdmin.auth.admin.updateUserById(targetId, authUpdatePayload)
+        .catch((e) => console.warn('Auth update metadata warning:', e));
     } else if (emailClean) {
       await supabaseAdmin
         .from('profiles')
