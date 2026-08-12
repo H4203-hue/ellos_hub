@@ -49,7 +49,19 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
-  // 🔄 Redirecionamento Automático para Usuários Logados
+  // 🔄 Captura de sessão ativa via Supabase Auth State Change
+  useEffect(() => {
+    if (supabase && isSupabaseConfigured) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          window.location.href = '/';
+        }
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, []);
+
+  // 🔄 Redirecionamento Automático para Usuários Logados (Sessão Salva)
   useEffect(() => {
     const checkActiveSession = async () => {
       try {
@@ -78,7 +90,7 @@ export default function LoginPage() {
     checkActiveSession();
   }, [router]);
 
-  // 🌐 Login com o Google OAuth
+  // 🌐 Login com o Google OAuth (PKCE com offline/consent)
   const handleGoogleLogin = async () => {
     if (!supabase || !isSupabaseConfigured) {
       toast.error('Serviço de autenticação não configurado.');
@@ -93,6 +105,10 @@ export default function LoginPage() {
         provider: 'google',
         options: {
           redirectTo: `${origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 
