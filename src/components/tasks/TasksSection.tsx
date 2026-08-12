@@ -11,7 +11,8 @@ import {
   Filter, 
   ListTodo,
   Pencil,
-  Trash2
+  Trash2,
+  Plus
 } from 'lucide-react';
 
 interface TasksSectionProps {
@@ -138,7 +139,8 @@ export const TasksSection: React.FC<TasksSectionProps> = ({
                 onClick={() => onOpenAddModal('task')}
                 className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-[#D4AF37] to-[#B89028] hover:brightness-110 rounded-xl shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
               >
-                <span>+ Nova Tarefa</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Nova Tarefa</span>
               </button>
             )}
           </div>
@@ -158,7 +160,7 @@ export const TasksSection: React.FC<TasksSectionProps> = ({
             disabled={!quickTaskText.trim()}
             className="px-4 py-2.5 rounded-xl text-xs font-bold bg-navy-900 text-white dark:bg-gold-500 dark:text-navy-950 hover:brightness-110 disabled:opacity-50 transition-all shrink-0 shadow-xs cursor-pointer"
           >
-            + Adicionar
+            Adicionar
           </button>
           {onOpenAddModal && (
             <button

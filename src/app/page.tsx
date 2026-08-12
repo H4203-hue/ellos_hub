@@ -32,7 +32,8 @@ import {
   Database,
   LayoutGrid,
   List,
-  Eye
+  Eye,
+  Plus
 } from 'lucide-react';
 
 export default function Home() {
@@ -683,7 +684,7 @@ export default function Home() {
       />
 
       {/* Main Container Scrollable (Fit & Clean) */}
-      <main className="flex-1 overflow-y-auto no-scrollbar max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <main className="flex-1 overflow-y-auto no-scrollbar max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Database Status & Active Member Indicator Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 px-4 py-2.5 rounded-xl text-xs gap-2 shrink-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -868,9 +869,10 @@ export default function Home() {
                 {canCreate && (
                   <button
                     onClick={() => handleOpenAddModal('event', true)}
-                    className="sm:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
+                    className="sm:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
                   >
-                    <span>+ Evento</span>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Novo Evento</span>
                   </button>
                 )}
               </div>
@@ -942,7 +944,8 @@ export default function Home() {
                     onClick={() => handleOpenAddModal('event', true)}
                     className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-xs transition-all active:scale-95 shrink-0 ml-1 cursor-pointer"
                   >
-                    <span>+ Registrar Convite</span>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Novo Convite</span>
                   </button>
                 )}
               </div>
@@ -1049,7 +1052,8 @@ export default function Home() {
                     onClick={() => handleOpenAddModal('song', true)}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-xs transition-all active:scale-95 shrink-0 ml-1 cursor-pointer"
                   >
-                    <span>+ Adicionar Música</span>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Nova Música</span>
                   </button>
                 )}
               </div>
@@ -1129,6 +1133,8 @@ export default function Home() {
         onOpenMediaModal={() => setIsMediaModalOpen(true)}
         onOpenDevModal={() => router.push('/dev')}
         onLogout={handleLogout}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
       {/* Modal Ficha Completa Notion-Style Expandida */}

@@ -37,13 +37,13 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, name, voice, role, password } = body;
+    const { email, name, voice, role, password, phone } = body;
 
     if (!email || !name) {
       return NextResponse.json(
         { error: 'Campos obrigatórios faltando: e-mail e nome.' },
         { status: 400 }
-      )
+      );
     }
 
     const emailClean = String(email).trim().toLowerCase();
@@ -51,17 +51,17 @@ export async function POST(req: Request) {
     const supabaseAdmin = getAdminClient();
 
     // 1. Criar no Supabase Auth Admin
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    const { data: authData } = await supabaseAdmin.auth.admin.createUser({
       email: emailClean,
       password: userPassword,
       email_confirm: true,
-      user_metadata: { name, voice, role },
-    });
+      user_metadata: { name, voice, role, phone },
+    }).catch(() => ({ data: null }));
 
     const newUserId = authData?.user?.id || `prof-${Date.now()}`;
 
     // 2. Inserir em public.profiles
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: profile } = await supabaseAdmin
       .from('profiles')
       .upsert({
         id: newUserId,
@@ -69,21 +69,84 @@ export async function POST(req: Request) {
         name: String(name).trim(),
         voice: voice || 'Soprano',
         role: role || 'MEMBER',
+        phone: phone || null,
+        is_active: true,
       })
       .select()
       .single();
 
-    if (profileError) {
-      console.warn('Erro ao inserir perfil public.profiles:', profileError);
-    }
-
     return NextResponse.json({
       success: true,
-      user: profile || { id: newUserId, email: emailClean, name, voice, role },
+      user: profile || { id: newUserId, email: emailClean, name, voice, role, phone, isActive: true },
       tempPassword: userPassword,
     });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Erro interno ao criar usuário';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
+}
+
+// PUT: Editar dados do integrante (Perfil & Supabase Auth)
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, email, name, voice, role, phone, isActive } = body;
+
+    if (!id && !email) {
+      return NextResponse.json(
+        { error: 'ID ou e-mail do integrante é obrigatório para edição.' },
+        { status: 400 }
+      );
+    }
+
+    const supabaseAdmin = getAdminClient();
+
+    let targetId = id;
+    const emailClean = email ? String(email).trim().toLowerCase() : undefined;
+
+    if (!targetId && emailClean) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('email', emailClean)
+        .single();
+      if (profile) targetId = profile.id;
+    }
+
+    // 1. Atualizar em public.profiles
+    const updatePayload: Record<string, unknown> = {};
+    if (name !== undefined) updatePayload.name = String(name).trim();
+    if (emailClean !== undefined) updatePayload.email = emailClean;
+    if (voice !== undefined) updatePayload.voice = voice;
+    if (role !== undefined) updatePayload.role = role;
+    if (phone !== undefined) updatePayload.phone = phone;
+    if (isActive !== undefined) updatePayload.is_active = Boolean(isActive);
+
+    if (targetId) {
+      await supabaseAdmin
+        .from('profiles')
+        .update(updatePayload)
+        .eq('id', targetId);
+
+      // 2. Atualizar Metadata no Supabase Auth se aplicável
+      await supabaseAdmin.auth.admin.updateUserById(targetId, {
+        email: emailClean,
+        user_metadata: { name, voice, role, phone },
+      }).catch((e) => console.warn('Auth update metadata warning:', e));
+    } else if (emailClean) {
+      await supabaseAdmin
+        .from('profiles')
+        .update(updatePayload)
+        .eq('email', emailClean);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: '✨ Dados do integrante atualizados com sucesso!',
+      updated: { id: targetId, email: emailClean, name, voice, role, phone, isActive },
+    });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar dados do integrante';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
@@ -105,9 +168,7 @@ export async function DELETE(req: Request) {
     const supabaseAdmin = getAdminClient();
 
     if (userId) {
-      // Deletar no Supabase Auth
       await supabaseAdmin.auth.admin.deleteUser(userId).catch((e) => console.warn('Auth delete warning:', e));
-      // Deletar em public.profiles
       await supabaseAdmin.from('profiles').delete().eq('id', userId);
     } else if (email) {
       await supabaseAdmin.from('profiles').delete().eq('email', email);

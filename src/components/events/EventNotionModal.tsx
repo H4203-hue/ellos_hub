@@ -53,6 +53,8 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
   const [activeTab, setActiveTab] = useState<'geral' | 'presenca' | 'adm' | 'repertorio'>('geral');
   const [voteNote, setVoteNote] = useState('');
   const [lastVotedStatus, setLastVotedStatus] = useState<'YES' | 'MAYBE' | 'NO' | null>(null);
+  const [isVoting, setIsVoting] = useState(false);
+  const lastVoteTimeRef = React.useRef<number>(0);
 
   if (!isOpen || !event) return null;
 
@@ -65,24 +67,44 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
     : undefined;
 
   const handleVoteAction = async (status: 'YES' | 'MAYBE' | 'NO') => {
+    // ⚡ 1. Trava de Votação Encerrada
     if (event.isVotingClosed) {
       toast.error('🔒 Votação encerrada pela Regência (ADM).');
       return;
     }
 
-    setLastVotedStatus(status);
-    await onToggleVote(event.id, currentMember, status, voteNote);
+    // ⚡ 2. Trava Anti-Spam: Estado Repetido (Aborta se já for o voto atual)
+    if (myResponse?.status === status) {
+      return;
+    }
 
-    if (status === 'YES') {
-      toast.success(`✨ Presença confirmada para ${currentMember?.name || 'você'}!`, {
-        description: 'Seu voto foi registrado com sucesso no Ellos Hub.',
-      });
-    } else if (status === 'MAYBE') {
-      toast.warning(`🟡 Plantão / Escala registrado para ${currentMember?.name || 'você'}.`, {
-        description: 'Regência notificada sobre a ressalva.',
-      });
-    } else {
-      toast.info(`Ausência informada para ${currentMember?.name || 'você'}.`);
+    // ⚡ 3. Trava Anti-Spam: Throttle Guard de 1.5s
+    const now = Date.now();
+    if (now - lastVoteTimeRef.current < 1500 || isVoting) {
+      return;
+    }
+    lastVoteTimeRef.current = now;
+
+    // ⚡ 4. Desabilitação Instantânea no 1º Clique
+    setIsVoting(true);
+    setLastVotedStatus(status);
+
+    try {
+      await onToggleVote(event.id, currentMember, status, voteNote);
+
+      if (status === 'YES') {
+        toast.success(`✨ Presença confirmada para ${currentMember?.name || 'você'}!`, {
+          description: 'Seu voto foi registrado com sucesso no Ellos Hub.',
+        });
+      } else if (status === 'MAYBE') {
+        toast.warning(`🟡 Plantão / Escala registrado para ${currentMember?.name || 'você'}.`, {
+          description: 'Regência notificada sobre a ressalva.',
+        });
+      } else {
+        toast.info(`Ausência informada para ${currentMember?.name || 'você'}.`);
+      }
+    } finally {
+      setTimeout(() => setIsVoting(false), 800);
     }
   };
 
@@ -399,7 +421,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleVoteAction('YES')}
-                      disabled={event.isVotingClosed}
+                      disabled={isVoting || event.isVotingClosed}
                       className="py-3 px-4 rounded-2xl text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/20 hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       <CheckCircle2 className="w-4 h-4" />
@@ -410,7 +432,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleVoteAction('MAYBE')}
-                      disabled={event.isVotingClosed}
+                      disabled={isVoting || event.isVotingClosed}
                       className="py-3 px-4 rounded-2xl text-xs font-extrabold bg-amber-500/20 hover:bg-amber-500/30 text-gold-300 border border-amber-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       <HelpCircle className="w-4 h-4 text-gold-400" />
@@ -421,7 +443,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleVoteAction('NO')}
-                      disabled={event.isVotingClosed}
+                      disabled={isVoting || event.isVotingClosed}
                       className="py-3 px-4 rounded-2xl text-xs font-extrabold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       <XCircle className="w-4 h-4 text-rose-400" />

@@ -181,7 +181,7 @@ export const DevMemberManagementModal: React.FC<DevMemberManagementModalProps> =
               disabled={isSubmitting || !newEmail.trim() || !newName.trim()}
               className="w-full py-2.5 px-4 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
-              + Salvar Novo Integrante
+              Salvar Novo Integrante
             </button>
           </form>
 

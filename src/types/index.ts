@@ -9,6 +9,8 @@ export interface UserProfile {
   name: string;
   voice: VoiceType;
   role: UserRole;
+  phone?: string;
+  isActive?: boolean;
 }
 
 export interface RepertoireTag {
@@ -22,6 +24,17 @@ export interface GlobalSettings {
   appDomain: string;
   driveRootUrl: string;
   instagramBio: string;
+}
+
+export interface InviteToken {
+  id: string;
+  token: string;
+  createdBy?: string;
+  role: UserRole;
+  expiresAt: string;
+  isUsed: boolean;
+  usedByEmail?: string;
+  createdAt?: string;
 }
 
 export interface VoiceStem {

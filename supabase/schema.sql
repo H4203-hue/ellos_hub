@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   name TEXT NOT NULL,
   voice TEXT NOT NULL CHECK (voice IN ('Soprano', 'Contralto', 'Tenor', 'Baixo', 'Geral')),
   role TEXT NOT NULL CHECK (role IN ('MEMBER', 'MEDIA', 'ADM', 'DEV')) DEFAULT 'MEMBER',
+  phone TEXT,
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -86,6 +88,18 @@ CREATE TABLE IF NOT EXISTS public.tasks (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 7. TABELA DE TOKENS DE CONVITE DESCARTÁVEIS
+CREATE TABLE IF NOT EXISTS public.invite_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  token TEXT UNIQUE NOT NULL,
+  created_by TEXT,
+  role TEXT NOT NULL DEFAULT 'MEMBER',
+  is_used BOOLEAN DEFAULT false,
+  used_by_email TEXT,
+  expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '48 hours'),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- DESABILITAR RLS EM DEV
 ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.events DISABLE ROW LEVEL SECURITY;
@@ -93,6 +107,7 @@ ALTER TABLE public.event_responses DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.songs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.song_voice_kits DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.invite_tokens DISABLE ROW LEVEL SECURITY;
 
 -- HABILITAR SUPABASE REALTIME
 ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
@@ -101,6 +116,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.event_responses;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.songs;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.song_voice_kits;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.invite_tokens;
 
 -- ====================================================================
 -- SEED DATA — PERFIS E DADOS INICIAIS (9 INTEGRANTES OFICIAIS)

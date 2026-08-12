@@ -39,8 +39,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           />
         </div>
 
-        {/* Centro: Abas Principais (Sem scrollbar nativa) */}
-        <nav className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-950/60 rounded-xl border border-slate-200 dark:border-white/5 overflow-x-auto no-scrollbar">
+        {/* Centro: Abas Principais (Exibidas apenas a partir de md: em telas maiores) */}
+        <nav className="hidden md:flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-950/60 rounded-xl border border-slate-200 dark:border-white/5 overflow-x-auto no-scrollbar">
           <button
             onClick={() => onTabChange('agenda')}
             className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border-b-2 cursor-pointer ${
@@ -86,7 +86,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ Criar</span>
+              <span>Criar</span>
             </button>
           )}
 

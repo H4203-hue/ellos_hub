@@ -510,7 +510,7 @@ _Gerado via Ellos Hub_`;
                 className="w-full py-1.5 text-xs font-semibold text-navy-800 dark:text-gold-300 bg-white dark:bg-navy-900 border border-slate-200 dark:border-gold-500/20 hover:border-gold-500/50 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
               >
                 <Car className="w-3.5 h-3.5" />
-                <span>+ Oferecer Carona (Adicionar Carro)</span>
+                <span>Oferecer Carona (Adicionar Carro)</span>
               </button>
             )}
           </div>

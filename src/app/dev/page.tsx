@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { groupMembers, GroupMember, isDev } from '@/data/groupMembers';
-import { UserRole, VoiceType, RepertoireTag, GlobalSettings } from '@/types';
+import { UserRole, VoiceType, RepertoireTag, GlobalSettings, InviteToken } from '@/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { 
@@ -23,7 +23,8 @@ import {
   Plus, 
   Edit3, 
   ExternalLink,
-  Users
+  Users,
+  X
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -31,7 +32,48 @@ export default function DevPage() {
   const router = useRouter();
   const [currentMember, setCurrentMember] = useState<GroupMember | null>(null);
   const [membersList, setMembersList] = useState<GroupMember[]>(groupMembers);
-  const [activeTab, setActiveTab] = useState<'members' | 'tags' | 'settings' | 'monitor'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'invites' | 'tags' | 'settings' | 'monitor'>('members');
+  const [invitesList, setInvitesList] = useState<InviteToken[]>([]);
+
+  const fetchInvites = async () => {
+    try {
+      const res = await fetch('/api/admin/invites');
+      const data = await res.json();
+      if (data.invites) setInvitesList(data.invites);
+    } catch {
+      console.warn('Erro ao buscar convites descartáveis.');
+    }
+  };
+
+  const handleGenerateInviteToken = async () => {
+    try {
+      const res = await fetch('/api/admin/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ createdBy: currentMember?.name || 'DEV', role: 'MEMBER' }),
+      });
+      const data = await res.json();
+      if (data.inviteUrl) {
+        navigator.clipboard.writeText(data.inviteUrl);
+        toast.success('✨ Link de convite único gerado e copiado!', {
+          description: 'Válido por 48h para auto-cadastro de integrante.',
+        });
+        fetchInvites();
+      }
+    } catch {
+      toast.error('Erro ao gerar convite.');
+    }
+  };
+
+  const handleRevokeInviteToken = async (id: string) => {
+    try {
+      await fetch(`/api/admin/invites?id=${id}`, { method: 'DELETE' });
+      toast.success('Convite revogado com sucesso.');
+      fetchInvites();
+    } catch {
+      toast.error('Erro ao revogar convite.');
+    }
+  };
 
   // Add Member State
   const [newEmail, setNewEmail] = useState('');
@@ -39,9 +81,80 @@ export default function DevPage() {
   const [newVoice, setNewVoice] = useState<VoiceType>('Soprano');
   const [newRole, setNewRole] = useState<UserRole>('MEMBER');
 
-  // Confirmation Modal State
+  // Confirmation & Edit Modal State
   const [memberToDelete, setMemberToDelete] = useState<GroupMember | null>(null);
   const [tempPasswordResult, setTempPasswordResult] = useState<{ name: string; pass: string } | null>(null);
+
+  // Edit Member Modal State
+  const [editingMember, setEditingMember] = useState<GroupMember | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editVoice, setEditVoice] = useState<VoiceType>('Soprano');
+  const [editRole, setEditRole] = useState<UserRole>('MEMBER');
+  const [editIsActive, setEditIsActive] = useState<boolean>(true);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const handleOpenEditModal = (member: GroupMember) => {
+    setEditingMember(member);
+    setEditName(member.name);
+    setEditEmail(member.email);
+    setEditPhone(member.phone || '');
+    setEditVoice(member.voice);
+    setEditRole(member.role);
+    setEditIsActive(member.isActive !== false);
+  };
+
+  const handleSaveEditMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMember || !editName.trim() || !editEmail.trim()) return;
+
+    setIsSavingEdit(true);
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingMember.id,
+          name: editName.trim(),
+          email: editEmail.trim().toLowerCase(),
+          phone: editPhone.trim(),
+          voice: editVoice,
+          role: editRole,
+          isActive: editIsActive,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setMembersList((prev) =>
+          prev.map((m) =>
+            m.id === editingMember.id
+              ? {
+                  ...m,
+                  name: editName.trim(),
+                  email: editEmail.trim().toLowerCase(),
+                  phone: editPhone.trim(),
+                  voice: editVoice,
+                  role: editRole,
+                  isActive: editIsActive,
+                }
+              : m
+          )
+        );
+        toast.success(`✨ Dados de ${editName} atualizados com sucesso!`);
+        setEditingMember(null);
+      } else {
+        toast.error(data.error || 'Erro ao atualizar dados.');
+      }
+    } catch {
+      toast.error('Erro ao conectar com o servidor.');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   // Tags State
   const [tags, setTags] = useState<RepertoireTag[]>([]);
@@ -126,6 +239,7 @@ export default function DevPage() {
         }
 
         fetchTags();
+        fetchInvites();
       } catch (err) {
         console.warn('Erro ao verificar acesso DEV:', err);
         router.replace('/');
@@ -318,6 +432,18 @@ export default function DevPage() {
             </button>
 
             <button
+              onClick={() => setActiveTab('invites')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'invites'
+                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 font-black shadow-md'
+                  : 'bg-navy-950 text-slate-300 hover:bg-navy-800'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>2. Convites OTP ({invitesList.length})</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('tags')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'tags'
@@ -326,7 +452,7 @@ export default function DevPage() {
               }`}
             >
               <TagIcon className="w-4 h-4" />
-              <span>2. Tags do Repertório ({tags.length})</span>
+              <span>3. Tags ({tags.length})</span>
             </button>
 
             <button
@@ -338,7 +464,7 @@ export default function DevPage() {
               }`}
             >
               <Globe className="w-4 h-4" />
-              <span>3. Configurações Globais</span>
+              <span>4. Configurações Globais</span>
             </button>
 
             <button
@@ -350,7 +476,7 @@ export default function DevPage() {
               }`}
             >
               <Database className="w-4 h-4" />
-              <span>4. Monitor do Banco</span>
+              <span>5. Monitor DB</span>
             </button>
           </div>
 
@@ -431,7 +557,7 @@ export default function DevPage() {
                   disabled={isLoading || !newEmail.trim() || !newName.trim()}
                   className="w-full py-3 px-4 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-md transition-all cursor-pointer disabled:opacity-50"
                 >
-                  + Salvar Novo Integrante
+                  Salvar Novo Integrante
                 </button>
               </form>
 
@@ -478,26 +604,129 @@ export default function DevPage() {
                               {m.role}
                             </span>
                           </td>
-                          <td className="p-3.5 text-right space-x-2">
+                          <td className="p-3.5 text-right space-x-1.5">
+                            <button
+                              onClick={() => handleOpenEditModal(m)}
+                              title="Editar Integrante"
+                              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/10 hover:bg-amber-500/20 text-gold-300 border border-amber-500/30 transition-all cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Editar</span>
+                            </button>
                             <button
                               onClick={() => handleResetPassword(m)}
                               title="Resetar Senha"
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-navy-900 hover:bg-navy-800 text-gold-300 border border-gold-500/20 transition-all cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-navy-900 hover:bg-navy-800 text-gold-300 border border-gold-500/20 transition-all cursor-pointer inline-flex items-center gap-1"
                             >
-                              <KeyRound className="w-3.5 h-3.5 inline mr-1" />
-                              Resetar Senha
+                              <KeyRound className="w-3.5 h-3.5" />
+                              <span>Senha</span>
                             </button>
                             <button
                               onClick={() => setMemberToDelete(m)}
                               title="Excluir Integrante"
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-all cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-all cursor-pointer inline-flex items-center gap-1"
                             >
-                              <Trash2 className="w-3.5 h-3.5 inline mr-1" />
-                              Excluir
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Excluir</span>
                             </button>
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ABA 2: CONVITES DESCARTÁVEIS (OTP 48H) */}
+          {activeTab === 'invites' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="bg-navy-950/80 p-5 rounded-2xl border border-amber-500/20 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-emerald-400" />
+                      Gerador &amp; Controle de Convites Descartáveis (48h)
+                    </h3>
+                    <p className="text-xs text-slate-300">
+                      Links únicos e descartáveis para auto-cadastro de novos cantores com confirmação por código OTP.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleGenerateInviteToken}
+                    className="py-2.5 px-4 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md hover:brightness-110 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Gerar Link de Convite</span>
+                  </button>
+                </div>
+
+                {/* Tabela de Convites */}
+                <div className="overflow-x-auto rounded-2xl border border-navy-800 bg-navy-950/70 mt-2">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-navy-900 text-gold-400 font-bold uppercase text-[10px] tracking-wider border-b border-navy-800">
+                      <tr>
+                        <th className="p-3.5">Token / Criador</th>
+                        <th className="p-3.5">Validade (48h)</th>
+                        <th className="p-3.5">Status</th>
+                        <th className="p-3.5">Utilizado Por</th>
+                        <th className="p-3.5 text-right">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-navy-800/60">
+                      {invitesList.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="p-6 text-center text-slate-400">
+                            Nenhum token de convite gerado até o momento.
+                          </td>
+                        </tr>
+                      ) : (
+                        invitesList.map((inv) => {
+                          const isExpired = new Date(inv.expiresAt).getTime() < Date.now();
+                          return (
+                            <tr key={inv.id} className="hover:bg-navy-900/50 transition-colors">
+                              <td className="p-3.5">
+                                <span className="font-mono text-gold-300 font-bold block">
+                                  {inv.token.substring(0, 12)}...
+                                </span>
+                                <span className="text-[10px] text-slate-400">Por: {inv.createdBy}</span>
+                              </td>
+                              <td className="p-3.5 text-slate-300 font-mono text-[11px]">
+                                {inv.expiresAt ? new Date(inv.expiresAt).toLocaleString('pt-BR') : '48h'}
+                              </td>
+                              <td className="p-3.5">
+                                {inv.isUsed ? (
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30">
+                                    Utilizado
+                                  </span>
+                                ) : isExpired ? (
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                    Expirado
+                                  </span>
+                                ) : (
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    🟢 Ativo (Válido)
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-3.5 text-slate-300 font-mono text-[11px]">
+                                {inv.usedByEmail || '—'}
+                              </td>
+                              <td className="p-3.5 text-right">
+                                <button
+                                  onClick={() => handleRevokeInviteToken(inv.id)}
+                                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-all cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 inline mr-1" />
+                                  Revogar
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -554,7 +783,7 @@ export default function DevPage() {
                   type="submit"
                   className="w-full py-2.5 px-4 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 transition-all cursor-pointer"
                 >
-                  + Salvar Nova Tag
+                  Salvar Nova Tag
                 </button>
               </form>
 
@@ -725,6 +954,150 @@ export default function DevPage() {
             >
               Concluído
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ✏️ MODAL DE EDIÇÃO COMPLETA DE INTEGRANTE (v2.8) */}
+      {editingMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-md animate-in fade-in duration-200 font-sans">
+          <div className="bg-[#1B365D] border border-amber-500/30 rounded-3xl p-6 sm:p-7 max-w-lg w-full space-y-5 text-slate-100 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-navy-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-amber-500/10 text-gold-400 border border-amber-500/20">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white">Editar Integrante</h3>
+                  <p className="text-xs text-slate-400">Atualize os dados e permissões do perfil no Supabase.</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setEditingMember(null)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-navy-800 cursor-pointer transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditMember} className="space-y-3.5 text-xs">
+              {/* Nome */}
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-300">Nome Completo *</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-950 text-slate-100 focus:outline-none focus:ring-2 focus:ring-gold-500/50"
+                />
+              </div>
+
+              {/* E-mail & WhatsApp */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-300">E-mail *</label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-950 text-slate-100 focus:outline-none focus:ring-2 focus:ring-gold-500/50 font-mono text-[11px]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-300">Telefone / WhatsApp</label>
+                  <input
+                    type="tel"
+                    placeholder="(11) 99999-8888"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-950 text-slate-100 focus:outline-none focus:ring-2 focus:ring-gold-500/50"
+                  />
+                </div>
+              </div>
+
+              {/* Naipe Vocal & Role */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-300">Naipe Vocal</label>
+                  <select
+                    value={editVoice}
+                    onChange={(e) => setEditVoice(e.target.value as VoiceType)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-950 text-slate-100 focus:outline-none focus:ring-2 focus:ring-gold-500/50"
+                  >
+                    <option value="Soprano">Soprano</option>
+                    <option value="Contralto">Contralto</option>
+                    <option value="Tenor">Tenor</option>
+                    <option value="Baixo">Baixo</option>
+                    <option value="Geral">Geral</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-300">Papel / Responsabilidade (Role)</label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as UserRole)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-950 text-gold-300 font-bold focus:outline-none focus:ring-2 focus:ring-gold-500/50"
+                  >
+                    <option value="MEMBER">MEMBER (Membro Padrão)</option>
+                    <option value="MEDIA">MEDIA (Duda / Mídia)</option>
+                    <option value="ADM">ADM (Rayane / Eloise)</option>
+                    <option value="DEV">DEV (Henrique / Engenharia)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Status de Atividade (is_active) */}
+              <div className="pt-1">
+                <label className="font-semibold text-slate-300 block mb-1.5">Status de Atividade no Grupo</label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditIsActive(true)}
+                    className={`flex-1 py-2 px-3 rounded-xl font-bold border transition-all cursor-pointer ${
+                      editIsActive
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-xs'
+                        : 'bg-navy-950 text-slate-400 border-navy-800'
+                    }`}
+                  >
+                    🟢 Ativo no Grupo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditIsActive(false)}
+                    className={`flex-1 py-2 px-3 rounded-xl font-bold border transition-all cursor-pointer ${
+                      !editIsActive
+                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-xs'
+                        : 'bg-navy-950 text-slate-400 border-navy-800'
+                    }`}
+                  >
+                    🔴 Inativo / Afastado
+                  </button>
+                </div>
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex items-center gap-2 pt-3 border-t border-navy-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingMember(null)}
+                  className="flex-1 py-2.5 rounded-xl font-bold bg-navy-950 text-slate-300 hover:bg-navy-900 border border-navy-800 transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="flex-1 py-2.5 rounded-xl font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingEdit ? 'Salvando alterações...' : 'Salvar Alterações'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

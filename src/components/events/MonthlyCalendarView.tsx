@@ -11,7 +11,9 @@ import {
   CheckCircle2, 
   HelpCircle, 
   Sparkles,
-  Plus
+  Plus,
+  ArrowRight,
+  Shirt
 } from 'lucide-react';
 
 interface MonthlyCalendarViewProps {
@@ -28,6 +30,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
   canCreate,
 }) => {
   const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [selectedDayNum, setSelectedDayNum] = useState<number | null>(() => new Date().getDate());
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -37,7 +40,8 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
-  const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const daysOfWeekFull = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const daysOfWeekShort = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
   // Primeiro dia do mês e total de dias
   const firstDayOfMonth = new Date(year, month, 1).getDay();
@@ -45,14 +49,18 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
 
   const prevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
+    setSelectedDayNum(null);
   };
 
   const nextMonth = () => {
     setCurrentDate(new Date(year, month + 1, 1));
+    setSelectedDayNum(null);
   };
 
   const goToToday = () => {
-    setCurrentDate(new Date());
+    const today = new Date();
+    setCurrentDate(today);
+    setSelectedDayNum(today.getDate());
   };
 
   // Parse strings de data "YYYY-MM-DD"
@@ -108,42 +116,45 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
     calendarCells.push(d);
   }
 
+  // Eventos do dia selecionado
+  const selectedEvents = selectedDayNum ? getEventsForDay(selectedDayNum) : [];
+
   return (
-    <div className="bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 font-sans transition-all">
+    <div className="bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 rounded-3xl p-3.5 sm:p-6 shadow-xl space-y-4 font-sans transition-all">
       {/* Top Header do Calendário Mensal */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 dark:border-navy-800 pb-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-200 dark:border-navy-800 pb-3.5">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-gold-500/10 border border-gold-500/20 text-gold-500">
-            <CalendarIcon className="w-5 h-5" />
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-gold-500/10 border border-gold-500/20 text-gold-500 shrink-0">
+            <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-slate-900 dark:text-white capitalize">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white capitalize">
               {monthNames[month]} <span className="text-gold-500">{year}</span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Visão Mensal Notion-Style • Clique em qualquer dia para abrir a Ficha Completa
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Visão Mensal Notion-Style • Selecione um dia para ver compromissos
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
           <button
             onClick={goToToday}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-900 border border-slate-200 dark:border-navy-800 transition-all cursor-pointer"
+            className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-900 border border-slate-200 dark:border-navy-800 transition-all cursor-pointer"
           >
             Hoje
           </button>
           <button
             onClick={prevMonth}
             title="Mês Anterior"
-            className="p-2 rounded-xl bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-900 border border-slate-200 dark:border-navy-800 transition-all cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-900 border border-slate-200 dark:border-navy-800 transition-all cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={nextMonth}
             title="Próximo Mês"
-            className="p-2 rounded-xl bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-900 border border-slate-200 dark:border-navy-800 transition-all cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-900 border border-slate-200 dark:border-navy-800 transition-all cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -151,59 +162,73 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
           {canCreate && onOpenAddModal && (
             <button
               onClick={onOpenAddModal}
-              className="ml-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-sm transition-all cursor-pointer active:scale-95"
+              className="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-sm transition-all cursor-pointer active:scale-95"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ Evento</span>
+              <span>Novo Evento</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Dias da Semana (Header) */}
-      <div className="grid grid-cols-7 gap-1 text-center font-bold text-[11px] uppercase tracking-wider text-slate-400 dark:text-gold-400/80">
-        {daysOfWeek.map((day) => (
-          <div key={day} className="py-2">
-            {day}
-          </div>
-        ))}
+      {/* Dias da Semana (Header Desktop & Mobile) */}
+      <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 dark:text-gold-400/80">
+        {/* Desktop Header */}
+        <div className="hidden md:contents">
+          {daysOfWeekFull.map((day) => (
+            <div key={day} className="py-1">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Mobile Header */}
+        <div className="contents md:hidden">
+          {daysOfWeekShort.map((day, i) => (
+            <div key={i} className="py-1">
+              {day}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Grade do Calendário */}
-      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {calendarCells.map((dayNum, idx) => {
           if (dayNum === null) {
             return (
               <div
                 key={`empty-${idx}`}
-                className="min-h-[90px] sm:min-h-[110px] rounded-2xl bg-slate-50/40 dark:bg-navy-950/20 border border-transparent"
+                className="min-h-[50px] sm:min-h-[105px] rounded-2xl bg-slate-50/40 dark:bg-navy-950/20 border border-transparent"
               />
             );
           }
 
           const dayEvents = getEventsForDay(dayNum);
           const activeToday = isToday(dayNum);
+          const isSelected = selectedDayNum === dayNum;
 
           return (
             <div
               key={`day-${dayNum}`}
-              className={`min-h-[90px] sm:min-h-[110px] rounded-2xl p-1.5 sm:p-2 border transition-all duration-200 flex flex-col justify-between group ${
-                dayEvents.length > 0 ? 'cursor-pointer hover:border-amber-500/40 hover:shadow-lg hover:-translate-y-0.5' : 'cursor-default'
-              } ${
-                activeToday
-                  ? 'bg-gold-500/10 border-gold-500/40 dark:bg-gold-500/10'
-                  : 'bg-slate-50 dark:bg-navy-950/60 border-slate-200/80 dark:border-navy-800'
-              }`}
               onClick={() => {
+                setSelectedDayNum(dayNum);
                 if (dayEvents.length > 0) {
                   onSelectEvent(dayEvents[0]);
                 }
               }}
+              className={`min-h-[55px] sm:min-h-[105px] rounded-2xl p-1.5 sm:p-2 border transition-all duration-200 flex flex-col justify-between cursor-pointer group ${
+                isSelected
+                  ? 'ring-2 ring-gold-500 border-gold-400 dark:bg-gold-500/20'
+                  : activeToday
+                  ? 'bg-gold-500/10 border-gold-500/40 dark:bg-gold-500/10'
+                  : 'bg-slate-50 dark:bg-navy-950/60 border-slate-200/80 dark:border-navy-800 hover:border-amber-500/40'
+              }`}
             >
               {/* Número do Dia */}
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs font-black px-2 py-0.5 rounded-lg ${
+                  className={`text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-lg ${
                     activeToday
                       ? 'bg-gold-500 text-slate-950 font-black shadow-xs'
                       : 'text-slate-700 dark:text-slate-300'
@@ -213,14 +238,32 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
                 </span>
 
                 {dayEvents.length > 0 && (
-                  <span className="text-[10px] font-bold text-amber-500 dark:text-gold-400 opacity-80 group-hover:opacity-100">
-                    {dayEvents.length} {dayEvents.length === 1 ? 'evento' : 'eventos'}
+                  <span className="hidden sm:inline-block text-[10px] font-bold text-amber-500 dark:text-gold-400">
+                    {dayEvents.length} {dayEvents.length === 1 ? 'evento' : 'evs'}
                   </span>
                 )}
               </div>
 
-              {/* Badges de Eventos Compactos */}
-              <div className="space-y-1 mt-1 flex-1 overflow-y-auto no-scrollbar">
+              {/* 🟢 MOBILE MODE: Pontos Indicadores Coloridos (Dots) */}
+              {dayEvents.length > 0 && (
+                <div className="flex sm:hidden items-center justify-center gap-1 pt-1">
+                  {dayEvents.slice(0, 3).map((evt) => {
+                    const statusInfo = getStatusBadge(evt.status);
+                    return (
+                      <span
+                        key={evt.id}
+                        className={`w-2 h-2 rounded-full ${statusInfo.dotColor}`}
+                      />
+                    );
+                  })}
+                  {dayEvents.length > 3 && (
+                    <span className="text-[8px] font-black text-gold-400">+</span>
+                  )}
+                </div>
+              )}
+
+              {/* 🖥️ DESKTOP MODE: Badges de Eventos Retangulares */}
+              <div className="hidden sm:block space-y-1 mt-1 flex-1 overflow-y-auto no-scrollbar">
                 {dayEvents.map((evt) => {
                   const statusInfo = getStatusBadge(evt.status);
                   return (
@@ -230,7 +273,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
                         e.stopPropagation();
                         onSelectEvent(evt);
                       }}
-                      className={`p-1 sm:p-1.5 rounded-xl border text-[10px] font-semibold tracking-tight transition-all duration-200 ${statusInfo.badgeStyle} hover:scale-[1.02] shadow-xs cursor-pointer truncate`}
+                      className={`p-1.5 rounded-xl border text-[10px] font-semibold tracking-tight transition-all duration-200 ${statusInfo.badgeStyle} hover:scale-[1.02] shadow-xs cursor-pointer truncate`}
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         <span className={`w-2 h-2 rounded-full shrink-0 ${statusInfo.dotColor}`} />
@@ -251,6 +294,68 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
           );
         })}
       </div>
+
+      {/* 📱 DETALHES DO DIA SELECIONADO (Cards Expansíveis Notion-Style) */}
+      {selectedDayNum && (
+        <div className="pt-3 border-t border-slate-200 dark:border-navy-800 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-700 dark:text-gold-300 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-gold-400" />
+              <span>Agenda para {selectedDayNum} de {monthNames[month]}:</span>
+            </span>
+            <span className="text-[10px] font-extrabold text-slate-400">
+              {selectedEvents.length} {selectedEvents.length === 1 ? 'compromisso' : 'compromissos'}
+            </span>
+          </div>
+
+          {selectedEvents.length === 0 ? (
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-navy-950/40 border border-slate-200 dark:border-navy-800/80 text-center text-xs text-slate-400">
+              Nenhum evento agendado para este dia.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {selectedEvents.map((evt) => {
+                const statusInfo = getStatusBadge(evt.status);
+                return (
+                  <div
+                    key={evt.id}
+                    onClick={() => onSelectEvent(evt)}
+                    className="p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-navy-950/80 border border-slate-200 dark:border-amber-500/20 hover:border-gold-500/40 transition-all cursor-pointer space-y-2 group"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${statusInfo.badgeStyle}`}>
+                        {statusInfo.label}
+                      </span>
+                      {evt.time && (
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-gold-400" />
+                          <span>{evt.time}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white group-hover:text-gold-300 transition-colors">
+                      {evt.title}
+                    </h4>
+
+                    {evt.location && (
+                      <p className="text-xs text-slate-500 dark:text-slate-300 flex items-center gap-1 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-gold-400 shrink-0" />
+                        <span className="truncate">{evt.location}</span>
+                      </p>
+                    )}
+
+                    <div className="pt-1.5 border-t border-slate-200 dark:border-navy-800 flex items-center justify-between text-[11px] font-bold text-gold-400">
+                      <span>Abrir Ficha Completa (Notion)</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

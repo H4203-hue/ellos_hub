@@ -16,7 +16,10 @@ import {
   SlidersHorizontal,
   ExternalLink,
   Smartphone,
-  Share2
+  Share2,
+  Calendar,
+  Layers,
+  ListTodo
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -31,6 +34,8 @@ interface SidebarDrawerProps {
   onOpenMediaModal: () => void;
   onOpenDevModal: () => void;
   onLogout: () => void;
+  activeTab?: 'agenda' | 'repertoire' | 'tasks';
+  onTabChange?: (tab: 'agenda' | 'repertoire' | 'tasks') => void;
 }
 
 export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
@@ -44,6 +49,8 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
   onOpenMediaModal,
   onOpenDevModal,
   onLogout,
+  activeTab,
+  onTabChange,
 }) => {
   const [showPwaHelp, setShowPwaHelp] = useState(false);
 
@@ -103,6 +110,59 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
               <X className="w-5 h-5" />
             </button>
           </div>
+
+          {/* Navegação Principal Mobile */}
+          {onTabChange && (
+            <div className="space-y-1.5 pb-2 md:hidden">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gold-400 block">
+                Navegação Principal
+              </span>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  onClick={() => {
+                    onTabChange('agenda');
+                    onClose();
+                  }}
+                  className={`p-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-1 border cursor-pointer ${
+                    activeTab === 'agenda'
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 border-gold-400 font-black'
+                      : 'bg-navy-950 text-slate-300 border-navy-800 hover:bg-navy-900'
+                  }`}
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>Agenda</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onTabChange('repertoire');
+                    onClose();
+                  }}
+                  className={`p-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-1 border cursor-pointer ${
+                    activeTab === 'repertoire'
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 border-gold-400 font-black'
+                      : 'bg-navy-950 text-slate-300 border-navy-800 hover:bg-navy-900'
+                  }`}
+                >
+                  <Layers className="w-4 h-4" />
+                  <span>Músicas</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onTabChange('tasks');
+                    onClose();
+                  }}
+                  className={`p-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-1 border cursor-pointer ${
+                    activeTab === 'tasks'
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 border-gold-400 font-black'
+                      : 'bg-navy-950 text-slate-300 border-navy-800 hover:bg-navy-900'
+                  }`}
+                >
+                  <ListTodo className="w-4 h-4" />
+                  <span>Tarefas</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Active Member Profile Card */}
           {currentMember ? (
@@ -177,6 +237,34 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
 
             {canCreate && (
               <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/admin/invites', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ createdBy: currentMember?.name || 'Regência', role: 'MEMBER' }),
+                    });
+                    const data = await res.json();
+                    if (data.inviteUrl) {
+                      navigator.clipboard.writeText(data.inviteUrl);
+                      toast.success('✨ Link de convite único gerado e copiado!', {
+                        description: 'Válido por 48 horas para auto-cadastro de integrante.',
+                      });
+                      onClose();
+                    }
+                  } catch {
+                    toast.error('Erro ao gerar link de convite.');
+                  }
+                }}
+                className="w-full py-2.5 px-3.5 rounded-xl text-xs font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span>Gerar Convite Único de Integrante</span>
+              </button>
+            )}
+
+            {canCreate && (
+              <button
                 onClick={() => {
                   onClose();
                   onOpenAddModal();
@@ -184,7 +272,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
                 className="w-full py-2.5 px-3.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>+ Criar (Evento / Música / Tarefa)</span>
+                <span>Criar (Evento / Música / Tarefa)</span>
               </button>
             )}
 
