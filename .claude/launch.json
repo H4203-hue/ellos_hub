@@ -1,0 +1,9 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ellos-hub-existing",
+      "url": "http://localhost:3000"
+    }
+  ]
+}

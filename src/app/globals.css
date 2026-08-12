@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f223d;
+}
+
+.dark {
+  --background: #0f223d;
+  --foreground: #f1f5f9;
 }
 
 @theme inline {
@@ -10,17 +17,59 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Ellos — Azul Institucional (Deep Navy) */
+  --color-navy-950: #0f223d;
+  --color-navy-900: #1b365d;
+  --color-navy-800: #24406b;
+  --color-navy-700: #2d4a7a;
+  --color-navy-600: #3a5a8c;
+  --color-navy-500: #4a6fa5;
+
+  /* Ellos — Dourado Metálico / Champagne (Gold Accent) */
+  --color-gold-300: #f0dfaf;
+  --color-gold-400: #e5c378;
+  --color-gold-500: #d4af37;
+  --color-gold-600: #bf9b30;
+  --color-gold-700: #b89028;
+  --color-gold-800: #8c6e20;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Remove a scrollbar vertical de toda a aplicação mantendo a rolagem ativa por mouse/touch */
+html, body {
+  -ms-overflow-style: none !important;  /* IE e Edge */
+  scrollbar-width: none !important;  /* Firefox */
+  overflow-y: auto;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Esconde a barra de rolagem em utilitários no-scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important; /* IE e Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+/* Evita estouro de rolagem na página inteira quando o modal estiver aberto */
+body:has([role="dialog"]),
+body.modal-open {
+  overflow: hidden !important;
 }

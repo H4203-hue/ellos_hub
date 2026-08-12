@@ -12,6 +12,19 @@ export const mockEvents: EventItem[] = [
     contactName: 'Secretaria IASD Itapecerica',
     contactPhone: '11988887777',
     notes: 'Chegada da equipe às 08:30 para passagem de som e alinhamento dos microfones.',
+    dressCode: '👔 Social Dourado/Azul (Gravata Dourada & Terno Azul)',
+    microphonesCount: 4,
+    songIds: ['song-1', 'song-2'],
+    drivers: [
+      { name: 'Henrique', spots: 4 },
+      { name: 'Lucas', spots: 3 },
+    ],
+    passengers: ['Gi', 'Duda', 'Pedrinho', 'Sarah'],
+    schedule: [
+      { time: '08:30', activity: 'Passagem de Som e Teste de Mics' },
+      { time: '09:15', activity: 'Oração & Concentração da Equipe' },
+      { time: '10:00', activity: 'Apresentação Principal no Culto' },
+    ],
   },
   {
     id: 'evt-2',
@@ -24,6 +37,18 @@ export const mockEvents: EventItem[] = [
     contactName: 'Pr. Responsável',
     contactPhone: '11977776666',
     notes: 'Apresentação no programa especial de jovens.',
+    dressCode: '👔 Esporte Fino (Camisa Branca & Calça Escura)',
+    microphonesCount: 4,
+    songIds: ['song-2', 'song-3'],
+    drivers: [
+      { name: 'Gabriel', spots: 4 },
+    ],
+    passengers: ['Daniela', 'Renan'],
+    schedule: [
+      { time: '08:40', activity: 'Passagem de Som' },
+      { time: '09:15', activity: 'Momento de Oração' },
+      { time: '09:30', activity: 'Abertura do Programa Jovem' },
+    ],
   },
   {
     id: 'evt-3',
@@ -37,6 +62,18 @@ export const mockEvents: EventItem[] = [
     notes: 'Requer repertório especial para entrada e bênção. Votação de disponibilidade dos integrantes em andamento.',
     votesCount: { yes: 5, total: 7 },
     userVoted: true,
+    dressCode: '👗 Social Completo / Traje de Gala',
+    microphonesCount: 4,
+    songIds: ['song-1'],
+    drivers: [
+      { name: 'Henrique', spots: 3 },
+    ],
+    passengers: ['Gi'],
+    schedule: [
+      { time: '16:00', activity: 'Passagem de som no local' },
+      { time: '16:45', activity: 'Oração em grupo' },
+      { time: '17:00', activity: 'Entrada dos noivos & Cerimônia' },
+    ],
   },
   {
     id: 'evt-4',
@@ -50,6 +87,15 @@ export const mockEvents: EventItem[] = [
     notes: 'Aguardando definição da data oficial e formato da apresentação.',
     votesCount: { yes: 3, total: 7 },
     userVoted: false,
+    dressCode: '👔 Social Alinhado Neutro',
+    microphonesCount: 2,
+    songIds: ['song-2'],
+    drivers: [],
+    passengers: [],
+    schedule: [
+      { time: 'A definir', activity: 'Chegada e alinhamento de palco' },
+      { time: 'A definir', activity: 'Apresentação musical' },
+    ],
   },
   {
     id: 'evt-5',
@@ -64,6 +110,16 @@ export const mockEvents: EventItem[] = [
     notes: 'Convite recebido via WhatsApp. Confirmar horário com a coordenação.',
     votesCount: { yes: 4, total: 7 },
     userVoted: false,
+    dressCode: '👔 Social Dourado/Azul',
+    microphonesCount: 4,
+    songIds: ['song-1', 'song-3'],
+    drivers: [{ name: 'Lucas', spots: 4 }],
+    passengers: ['Sarah'],
+    schedule: [
+      { time: '08:45', activity: 'Passagem de som' },
+      { time: '09:15', activity: 'Oração' },
+      { time: '09:30', activity: 'Início da Escola Sabatina' },
+    ],
   },
   {
     id: 'evt-6',
@@ -77,6 +133,15 @@ export const mockEvents: EventItem[] = [
     notes: 'Pendente contato telefônico para fechar detalhes.',
     votesCount: { yes: 2, total: 7 },
     userVoted: false,
+    dressCode: '👔 Esporte Fino Dourado',
+    microphonesCount: 4,
+    songIds: ['song-2'],
+    drivers: [],
+    passengers: [],
+    schedule: [
+      { time: '08:45', activity: 'Chegada e Passagem de Som' },
+      { time: '09:30', activity: 'Apresentação' },
+    ],
   },
   {
     id: 'evt-7',
@@ -88,6 +153,17 @@ export const mockEvents: EventItem[] = [
     location: 'Estúdio LumeM',
     contactName: 'Produção LumeM',
     notes: 'Sessão de gravação de vozes para o single em colaboração.',
+    dressCode: '👕 Camiseta Ellos / Casual Estúdio',
+    microphonesCount: 4,
+    songIds: ['song-1', 'song-2'],
+    drivers: [{ name: 'Henrique', spots: 3 }],
+    passengers: ['Duda', 'Pedrinho'],
+    schedule: [
+      { time: '14:00', activity: 'Aquece Vocal & Alinhamento' },
+      { time: '14:30', activity: 'Gravação Naipe Feminino' },
+      { time: '16:00', activity: 'Gravação Naipe Masculino' },
+      { time: '17:30', activity: 'Review & Encerramento' },
+    ],
   },
   {
     id: 'evt-8',
@@ -101,6 +177,16 @@ export const mockEvents: EventItem[] = [
     notes: 'Apresentação ao ar livre no programa de fim de ano.',
     votesCount: { yes: 6, total: 7 },
     userVoted: true,
+    dressCode: '👔 Social Dourado/Azul Especial',
+    microphonesCount: 4,
+    songIds: ['song-1', 'song-2', 'song-3'],
+    drivers: [{ name: 'Gabriel', spots: 4 }, { name: 'Lucas', spots: 3 }],
+    passengers: ['Henrique', 'Gi', 'Duda', 'Daniela'],
+    schedule: [
+      { time: '18:00', activity: 'Montagem e Passagem de Som' },
+      { time: '19:00', activity: 'Oração com Integrantes' },
+      { time: '19:30', activity: 'Apresentação Natalina' },
+    ],
   },
 ];
 

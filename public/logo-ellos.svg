@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" width="100%" height="100%">
+  <defs>
+    <!-- Gradiente Dourado Champagne Metálico -->
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F3E0AA" />
+      <stop offset="30%" stop-color="#DFBA68" />
+      <stop offset="70%" stop-color="#C69230" />
+      <stop offset="100%" stop-color="#8E6213" />
+    </linearGradient>
+
+    <!-- Gradiente Dourado Claro para brilho -->
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF3D1" />
+      <stop offset="100%" stop-color="#D4AF37" />
+    </linearGradient>
+
+    <!-- Sombra sutil para profundidade -->
+    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- GRUPO DO SÍMBOLO (Esquerda) -->
+  <g transform="translate(10, 5)" filter="url(#subtleShadow)">
+    <!-- Círculo Pincelado / Texturizado -->
+    <path d="M 55,8 
+             A 47,47 0 1,1 8,58 
+             C 8,30 28,10 55,8 Z" 
+          fill="none" 
+          stroke="url(#goldGradient)" 
+          stroke-width="3.5" 
+          stroke-linecap="round" 
+          stroke-dasharray="280 15 20 10" />
+
+    <path d="M 50,11 
+             A 44,44 0 1,1 12,55" 
+          fill="none" 
+          stroke="url(#goldGradient)" 
+          stroke-width="1.8" 
+          stroke-opacity="0.7" />
+
+    <!-- Elos Entrelaçados do Logo 1 -->
+    <!-- Elo Esquerdo -->
+    <circle cx="44" cy="55" r="16" fill="none" stroke="url(#goldGradient)" stroke-width="5.5" />
+    <!-- Elo Direito -->
+    <circle cx="66" cy="55" r="16" fill="none" stroke="url(#goldGradient)" stroke-width="5.5" />
+    
+    <!-- Interseção para dar o efeito entrelaçado -->
+    <path d="M 50 42 A 16 16 0 0 1 60 55" fill="none" stroke="url(#goldLight)" stroke-width="5.5" stroke-linecap="round" />
+  </g>
+
+  <!-- GRUPO DO TEXTO (Direita) -->
+  <g transform="translate(135, 0)">
+    <!-- Título Principal: ELLOS -->
+    <text x="0" y="68" 
+          font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Montserrat, sans-serif" 
+          font-size="52" 
+          font-weight="900" 
+          letter-spacing="3" 
+          fill="url(#goldGradient)">
+      ELLOS
+    </text>
+
+    <!-- Subtítulo: GRUPO VOCAL & GESTÃO -->
+    <text x="3" y="96" 
+          font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Montserrat, sans-serif" 
+          font-size="15" 
+          font-weight="700" 
+          letter-spacing="6.5" 
+          fill="#94A3B8">
+      GRUPO VOCAL &amp; GESTÃO
+    </text>
+  </g>
+</svg>
