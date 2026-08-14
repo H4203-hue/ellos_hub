@@ -147,13 +147,15 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   const handleAddDriver = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!newDriverName.trim()) return;
     setLocalDrivers((prev) => [...prev, { name: newDriverName.trim(), spots: Number(newDriverSpots) }]);
     setNewDriverName('');
     setShowAddCarModal(false);
   };
 
-  const handleCopyTechSheet = () => {
+  const handleCopyTechSheet = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const formattedSongs = eventSongsList.length > 0
       ? eventSongsList.map((s, idx) => `${idx + 1}. *${s.title}* (Tom: ${s.keySignature || 'N/D'}${s.bpm ? `, BPM: ${s.bpm}` : ''})`).join('\n')
       : '• Lista de músicas em definição no repertório';
@@ -191,7 +193,10 @@ _Gerado via Ellos Hub_`;
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
         {onEditEvent && (
           <button
-            onClick={() => onEditEvent(event)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditEvent(event);
+            }}
             title="Editar Evento"
             className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 transition-colors cursor-pointer"
           >
@@ -200,7 +205,8 @@ _Gerado via Ellos Hub_`;
         )}
         {onDeleteEvent && (
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               if (window.confirm(`Tem certeza que deseja excluir o evento "${event.title}"?`)) {
                 onDeleteEvent(event.id);
               }
@@ -275,7 +281,10 @@ _Gerado via Ellos Hub_`;
         {/* Sub-Abas do Evento: Geral, Cronograma, Caronas */}
         <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-950/60 rounded-xl mb-4 text-xs font-semibold">
           <button
-            onClick={() => setActiveTab('info')}
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveTab('info');
+            }}
             className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
               activeTab === 'info'
                 ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow-xs font-bold'
@@ -287,7 +296,10 @@ _Gerado via Ellos Hub_`;
           </button>
 
           <button
-            onClick={() => setActiveTab('schedule')}
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveTab('schedule');
+            }}
             className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
               activeTab === 'schedule'
                 ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow-xs font-bold'
@@ -299,7 +311,10 @@ _Gerado via Ellos Hub_`;
           </button>
 
           <button
-            onClick={() => setActiveTab('carpool')}
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveTab('carpool');
+            }}
             className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
               activeTab === 'carpool'
                 ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow-xs font-bold'
@@ -497,7 +512,7 @@ _Gerado via Ellos Hub_`;
             </div>
 
             {showAddCarModal ? (
-              <form onSubmit={handleAddDriver} className="p-2.5 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+              <form onSubmit={handleAddDriver} onClick={(e) => e.stopPropagation()} className="p-2.5 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
                 <input
                   type="text"
                   placeholder="Nome do Motorista"
@@ -519,13 +534,17 @@ _Gerado via Ellos Hub_`;
                   <div className="ml-auto flex gap-1">
                     <button
                       type="button"
-                      onClick={() => setShowAddCarModal(false)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowAddCarModal(false);
+                      }}
                       className="px-2 py-1 rounded text-slate-500 hover:text-slate-700 dark:text-slate-400 cursor-pointer"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
+                      onClick={(e) => e.stopPropagation()}
                       className="px-2.5 py-1 rounded bg-gold-500 text-slate-950 font-bold hover:bg-gold-400 cursor-pointer"
                     >
                       Salvar
@@ -535,7 +554,10 @@ _Gerado via Ellos Hub_`;
               </form>
             ) : (
               <button
-                onClick={() => setShowAddCarModal(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAddCarModal(true);
+                }}
                 className="w-full py-1.5 text-xs font-semibold text-navy-800 dark:text-gold-300 bg-white dark:bg-navy-900 border border-slate-200 dark:border-gold-500/20 hover:border-gold-500/50 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
               >
                 <Car className="w-3.5 h-3.5" />
@@ -575,6 +597,7 @@ _Gerado via Ellos Hub_`;
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 transition-colors"
           >
             <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
