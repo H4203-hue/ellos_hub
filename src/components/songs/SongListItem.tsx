@@ -75,7 +75,10 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
         {onEditSong && (
           <button
-            onClick={() => onEditSong(song)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditSong(song);
+            }}
             title="Editar Música"
             className="p-2 rounded-lg bg-slate-800/60 hover:bg-amber-400/20 text-slate-400 hover:text-amber-400 border border-slate-700/50 hover:border-amber-400/40 transition-all cursor-pointer shadow-xs"
           >
@@ -84,7 +87,8 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
         )}
         {onDeleteSong && (
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               if (window.confirm(`Tem certeza que deseja excluir a música "${song.title}"?`)) {
                 onDeleteSong(song.id);
               }
@@ -153,6 +157,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
               href={song.generalDriveFolderUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-navy-700 bg-navy-500/10 hover:bg-navy-500/20 dark:text-navy-300 rounded-xl border border-navy-500/30 transition-colors"
             >
               <Folder className="w-4 h-4 text-navy-600 dark:text-navy-400" />
@@ -166,6 +171,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
               href={song.sheetMusicUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
             >
               <FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />
@@ -189,6 +195,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
                   href={stem.driveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border transition-colors ${getVoicePillColor(
                     stem.label
                   )}`}
