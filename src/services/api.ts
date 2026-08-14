@@ -30,22 +30,35 @@ export const mapProfileToGroupMember = (profile: any): GroupMember => ({
   isActive: profile.is_active !== false,
 });
 
-// Serviço de deleção de eventos
+// Serviços de deleção
 export const deleteEventFromSupabase = async (id: string) => {
-  if (!supabase) return null;
-  return await supabase.from('events').delete().eq('id', id);
+  console.log(`🚀 [DEBUG EXCLUSÃO API] ID recebido: "${id}" | Tamanho do texto: ${id?.length}`);
+  if (!id) {
+    console.error("❌ ERRO CRÍTICO: Tentativa de excluir com ID vazio!");
+    return { data: null, error: new Error('ID vazio') };
+  }
+  if (!supabase) return { data: null, error: new Error('Supabase não configurado') };
+  return await supabase.from('events').delete().eq('id', id).select();
 };
 
-// Serviço de deleção de músicas
 export const deleteSongFromSupabase = async (id: string) => {
-  if (!supabase) return null;
-  return await supabase.from('songs').delete().eq('id', id);
+  console.log(`🚀 [DEBUG EXCLUSÃO API] ID recebido: "${id}" | Tamanho do texto: ${id?.length}`);
+  if (!id) {
+    console.error("❌ ERRO CRÍTICO: Tentativa de excluir com ID vazio!");
+    return { data: null, error: new Error('ID vazio') };
+  }
+  if (!supabase) return { data: null, error: new Error('Supabase não configurado') };
+  return await supabase.from('songs').delete().eq('id', id).select();
 };
 
-// Serviço de deleção de tarefas
 export const deleteTaskFromSupabase = async (id: string) => {
-  if (!supabase) return null;
-  return await supabase.from('tasks').delete().eq('id', id);
+  console.log(`🚀 [DEBUG EXCLUSÃO API] ID recebido: "${id}" | Tamanho do texto: ${id?.length}`);
+  if (!id) {
+    console.error("❌ ERRO CRÍTICO: Tentativa de excluir com ID vazio!");
+    return { data: null, error: new Error('ID vazio') };
+  }
+  if (!supabase) return { data: null, error: new Error('Supabase não configurado') };
+  return await supabase.from('tasks').delete().eq('id', id).select();
 };
 
 // Serviço de criação de convites públicos
@@ -60,15 +73,12 @@ export interface PublicInvitationPayload {
 }
 
 export const createPublicInvitation = async (payload: PublicInvitationPayload) => {
-  const newId = `evt-public-${Date.now()}`;
-  
   const fullNotes = [
     payload.period ? `Período: ${payload.period}` : '',
     payload.notes ? `Observações: ${payload.notes}` : '',
   ].filter(Boolean).join(' | ');
 
   const eventRow = {
-    id: newId,
     title: payload.location,
     category: payload.category,
     status: 'PROPOSAL',
@@ -83,10 +93,19 @@ export const createPublicInvitation = async (payload: PublicInvitationPayload) =
   };
 
   if (supabase) {
-    const { data, error } = await supabase.from('events').insert(eventRow).select();
-    if (error) throw error;
-    return data;
+    const { data, error } = await supabase
+      .from('events')
+      .insert([eventRow])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("❌ ERRO AO CRIAR NO BANCO:", error);
+      alert(`Erro ao salvar: ${error.message} \nDetalhes: ${error.details || error.hint || ''}`);
+      throw error;
+    }
+    return [data];
   }
 
-  return [eventRow];
+  return [{ ...eventRow, id: `evt-public-${Date.now()}` }];
 };

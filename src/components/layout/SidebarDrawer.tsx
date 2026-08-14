@@ -353,10 +353,8 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
         <div className="pt-4 border-t border-navy-800/80">
           <button
             onClick={() => {
-              if (window.confirm('Deseja realmente sair da sua conta?')) {
-                onClose();
-                onLogout();
-              }
+              onClose();
+              onLogout();
             }}
             className="w-full py-3 px-4 rounded-xl text-xs font-extrabold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >

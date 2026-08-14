@@ -194,6 +194,7 @@ _Gerado via Ellos Hub_`;
         {onEditEvent && (
           <button
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               onEditEvent(event);
             }}
@@ -206,10 +207,9 @@ _Gerado via Ellos Hub_`;
         {onDeleteEvent && (
           <button
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
-              if (window.confirm(`Tem certeza que deseja excluir o evento "${event.title}"?`)) {
-                onDeleteEvent(event.id);
-              }
+              onDeleteEvent(event.id);
             }}
             title="Excluir Evento"
             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 transition-colors cursor-pointer"

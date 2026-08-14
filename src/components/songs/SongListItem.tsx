@@ -76,6 +76,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
         {onEditSong && (
           <button
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               onEditSong(song);
             }}
@@ -88,10 +89,9 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
         {onDeleteSong && (
           <button
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
-              if (window.confirm(`Tem certeza que deseja excluir a música "${song.title}"?`)) {
-                onDeleteSong(song.id);
-              }
+              onDeleteSong(song.id);
             }}
             title="Excluir Música"
             className="p-2 rounded-lg bg-slate-800/60 hover:bg-rose-400/20 text-slate-400 hover:text-rose-400 border border-slate-700/50 hover:border-rose-400/40 transition-all cursor-pointer shadow-xs"
@@ -148,8 +148,10 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
         </div>
       </div>
 
-      {/* Coluna Direita: Links de Ação (Drive/Cifra) & Kits de Voz por Naipe (Com recuo pr-8 md:pr-10 para isolamento do lápis) */}
-      <div className="flex flex-col gap-3 min-w-[260px] shrink-0 pr-8 md:pr-10">
+      {/* Coluna Direita: Links de Ação (Drive/Cifra) & Kits de Voz por Naipe */}
+      {/* pr-24: os botões de Editar/Excluir ficam absolutos no canto (top-4 right-4),
+          essa folga é a reserva pra eles não colidirem com "Pasta Drive"/"Cifra / PDF" */}
+      <div className="flex flex-col gap-3 min-w-[260px] shrink-0 pr-24">
         {/* Botoes de Ação Principais */}
         <div className="flex items-center gap-2">
           {song.generalDriveFolderUrl && (
@@ -157,7 +159,11 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
               href={song.generalDriveFolderUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(song.generalDriveFolderUrl, '_blank');
+              }}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-navy-700 bg-navy-500/10 hover:bg-navy-500/20 dark:text-navy-300 rounded-xl border border-navy-500/30 transition-colors"
             >
               <Folder className="w-4 h-4 text-navy-600 dark:text-navy-400" />
@@ -171,7 +177,11 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
               href={song.sheetMusicUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(song.sheetMusicUrl, '_blank');
+              }}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
             >
               <FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />
@@ -195,7 +205,13 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
                   href={stem.driveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (stem.driveUrl) {
+                      window.open(stem.driveUrl, '_blank');
+                    }
+                  }}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border transition-colors ${getVoicePillColor(
                     stem.label
                   )}`}

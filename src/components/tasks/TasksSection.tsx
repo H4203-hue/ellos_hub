@@ -288,10 +288,10 @@ export const TasksSection: React.FC<TasksSectionProps> = ({
 
                   {onDeleteTask && (
                     <button
-                      onClick={() => {
-                        if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
-                          onDeleteTask(task.id);
-                        }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDeleteTask(task.id);
                       }}
                       title="Excluir Tarefa"
                       className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 transition-colors cursor-pointer"

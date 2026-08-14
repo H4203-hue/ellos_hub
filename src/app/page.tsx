@@ -25,6 +25,7 @@ import { groupMembers, GroupMember } from '@/data/groupMembers';
 import { toast } from 'sonner';
 import { 
   Calendar, 
+  CalendarX,
   Vote, 
   Search, 
   Filter, 
@@ -45,9 +46,9 @@ import {
 export default function Home() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'agenda' | 'repertoire' | 'tasks'>('agenda');
-  const [events, setEvents] = useState<EventItem[]>(mockEvents);
-  const [songs, setSongs] = useState<SongItem[]>(mockSongs);
-  const [tasks, setTasks] = useState<TaskItem[]>(mockTasks);
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [songs, setSongs] = useState<SongItem[]>([]);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
   
   // Member authentication & RBAC state
   const [currentMember, setCurrentMember] = useState<GroupMember | null>(null);
@@ -174,7 +175,7 @@ export default function Home() {
     if (!supabase) return;
     try {
       const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         setEvents(
           data.map((row) => ({
             id: row.id,
@@ -195,7 +196,7 @@ export default function Home() {
             votesCount: row.status === 'PROPOSAL' ? { yes: row.votes_yes ?? 1, total: row.votes_total ?? 9 } : undefined,
             userVoted: false,
             votingDeadline: row.voting_deadline || undefined,
-            isVotingClosed: Boolean(row.is_voting_closed),
+            isVotingClosed: false,
           }))
         );
         setDbStatus('supabase');
@@ -210,7 +211,7 @@ export default function Home() {
     try {
       const { data: songsData, error: songsErr } = await supabase.from('songs').select('*').order('created_at', { ascending: false });
       const { data: kitsData } = await supabase.from('song_voice_kits').select('*');
-      if (!songsErr && songsData && songsData.length > 0) {
+      if (!songsErr && songsData) {
         setSongs(
           songsData.map((row) => {
             const voiceKits = (kitsData || [])
@@ -248,7 +249,7 @@ export default function Home() {
     if (!supabase) return;
     try {
       const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         setTasks(
           data.map((row) => ({
             id: row.id,
@@ -488,7 +489,6 @@ export default function Home() {
           votes_yes: updatedEvent.votesCount?.yes ?? 1,
           votes_total: updatedEvent.votesCount?.total ?? 9,
           voting_deadline: updatedEvent.votingDeadline || null,
-          is_voting_closed: updatedEvent.isVotingClosed || false,
         });
       }
     }
@@ -519,31 +519,47 @@ export default function Home() {
     }
   };
 
-  const handleAddEvent = async (newEvent: EventItem) => {
-    setEvents((prev) => [newEvent, ...prev]);
-    toast.success('✨ Evento cadastrado com sucesso!');
-    if (supabase) {
-      await supabase.from('events').upsert({
-        id: newEvent.id,
-        title: newEvent.title,
-        category: newEvent.category,
-        status: newEvent.status,
-        date: newEvent.date || null,
-        time: newEvent.time || null,
-        location: newEvent.location || null,
-        contact_name: newEvent.contactName || null,
-        contact_phone: newEvent.contactPhone || null,
-        notes: newEvent.notes || null,
-        dress_code: newEvent.dressCode || null,
-        mic_count: newEvent.microphonesCount || 4,
-        schedule: newEvent.schedule || [],
-        drivers: newEvent.drivers || [],
-        passengers: newEvent.passengers || [],
-        votes_yes: newEvent.votesCount?.yes ?? 1,
-        votes_total: newEvent.votesCount?.total ?? 9,
-        voting_deadline: newEvent.votingDeadline || null,
-        is_voting_closed: newEvent.isVotingClosed || false,
-      });
+  // ============================================================================
+  // 2. FUNÇÃO DE CRIAR (LIMPA E RESTRITA)
+  // ============================================================================
+  const handleCreateEvent = async (formData: any) => {
+    try {
+      // 1. Limpamos TUDO que é lixo do frontend. O banco só vai receber o que ele conhece.
+      // Baseado na estrutura real do seu Supabase.
+      const payloadLimpo = {
+        id: crypto.randomUUID(), // ID seguro em texto
+        title: formData.title || "Evento Sem Título",
+        category: formData.category || "Geral",
+        status: formData.status || "Pendente",
+        date: formData.date || null,
+        time: formData.time || null,
+        location: formData.location || null,
+        mic_count: formData.mic_count ? parseInt(formData.mic_count, 10) : 0,
+        votes_yes: 0,
+        votes_total: 0
+      };
+
+      // 2. Envia pro banco e exige a resposta
+      const { data, error } = await supabase!
+        .from('events')
+        .insert([payloadLimpo])
+        .select()
+        .single();
+
+      // 3. Trava de Segurança
+      if (error) {
+        console.error("ERRO AO SALVAR NO BANCO:", error);
+        alert(`Erro: ${error.message}`);
+        return; // Morre aqui. Não cria evento fantasma.
+      }
+
+      // 4. Sucesso! Adiciona o dado real do banco na tela
+      setEvents((prev) => [...prev, data]);
+
+      // fecharModal() ou limparFormulario() aqui...
+
+    } catch (err) {
+      console.error("Erro no trycatch de criação:", err);
     }
   };
 
@@ -566,44 +582,73 @@ export default function Home() {
         contact_phone: updatedEvent.contactPhone || null,
         notes: updatedEvent.notes || null,
         dress_code: updatedEvent.dressCode || null,
-        mic_count: updatedEvent.microphonesCount || 4,
+        mic_count: updatedEvent.microphonesCount ? parseInt(String(updatedEvent.microphonesCount), 10) : 4,
         schedule: updatedEvent.schedule || [],
         drivers: updatedEvent.drivers || [],
         passengers: updatedEvent.passengers || [],
         votes_yes: updatedEvent.votesCount?.yes ?? 1,
         votes_total: updatedEvent.votesCount?.total ?? 9,
         voting_deadline: updatedEvent.votingDeadline || null,
-        is_voting_closed: updatedEvent.isVotingClosed || false,
       });
     }
   };
 
   const handleAddSong = async (newSong: SongItem) => {
-    setSongs((prev) => [newSong, ...prev]);
-    toast.success('✨ Música adicionada ao repertório!');
-    if (supabase) {
-      await supabase.from('songs').upsert({
-        id: newSong.id,
-        title: newSong.title,
-        artist_or_group: newSong.artistOrGroup || null,
-        key_signature: newSong.keySignature || null,
-        bpm: newSong.bpm ? Number(newSong.bpm) : null,
-        tags: newSong.tags || [],
-        status: newSong.status,
-        general_drive_url: newSong.generalDriveFolderUrl || null,
-        sheet_music_url: newSong.sheetMusicUrl || null,
-      });
+    const payloadDoBanco = {
+      id: newSong.id || `song-${Date.now()}`,
+      title: newSong.title || 'Sem título',
+      artist_or_group: newSong.artistOrGroup || null,
+      key_signature: newSong.keySignature || null,
+      bpm: newSong.bpm ? parseInt(String(newSong.bpm), 10) : null,
+      tags: newSong.tags && newSong.tags.length > 0 ? newSong.tags : ['Ellos'],
+      status: newSong.status || 'REHEARSING',
+      general_drive_url: newSong.generalDriveFolderUrl || null,
+      sheet_music_url: newSong.sheetMusicUrl || null,
+    };
 
-      if (newSong.voiceKits && newSong.voiceKits.length > 0) {
-        await supabase.from('song_voice_kits').delete().eq('song_id', newSong.id);
-        const kitsToInsert = newSong.voiceKits.map((vk) => ({
-          song_id: newSong.id,
+    if (supabase && isSupabaseConfigured) {
+      const { data, error } = await supabase
+        .from('songs')
+        .insert([payloadDoBanco])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("ERRO COMPLETO DO SUPABASE:", error);
+        alert(`Erro ao salvar: ${error.message} \nDetalhes: ${error.details || error.hint || ''}`);
+        return; // PARE AQUI! Não adicione na tela.
+      }
+
+      let voiceKits = newSong.voiceKits || [];
+      if (voiceKits.length > 0) {
+        const kitsToInsert = voiceKits.map((vk) => ({
+          song_id: data.id,
           label: vk.label,
           drive_url: vk.driveUrl,
         }));
         await supabase.from('song_voice_kits').insert(kitsToInsert);
       }
+
+      const createdSong: SongItem = {
+        id: data.id,
+        title: data.title,
+        artistOrGroup: data.artist_or_group || 'Ellos',
+        keySignature: data.key_signature || 'C',
+        bpm: data.bpm ? Number(data.bpm) : undefined,
+        tags: data.tags || ['Ellos'],
+        status: data.status,
+        generalDriveFolderUrl: data.general_drive_url || 'https://drive.google.com',
+        sheetMusicUrl: data.sheet_music_url || undefined,
+        voiceKits,
+      };
+
+      setSongs((prev) => [createdSong, ...prev]);
+      toast.success('✨ Música adicionada ao repertório!');
+      return;
     }
+
+    setSongs((prev) => [{ ...newSong, id: `song-local-${Date.now()}` }, ...prev]);
+    toast.success('✨ Música adicionada localmente!');
   };
 
   const handleUpdateSong = async (updatedSong: SongItem) => {
@@ -635,18 +680,44 @@ export default function Home() {
   };
 
   const handleAddTask = async (newTask: TaskItem) => {
-    setTasks((prev) => [newTask, ...prev]);
-    toast.success('✨ Tarefa registrada com sucesso!');
-    if (supabase) {
-      await supabase.from('tasks').upsert({
-        id: newTask.id,
-        description: newTask.description,
-        category: newTask.category,
-        due_date: newTask.dueDate || null,
-        is_done: newTask.isDone,
-        assigned_to: newTask.assignedTo || null,
-      });
+    const payloadDoBanco = {
+      id: newTask.id || `task-${Date.now()}`,
+      description: newTask.description || 'Sem descrição',
+      category: newTask.category || 'LOGISTICA',
+      due_date: newTask.dueDate || null,
+      is_done: Boolean(newTask.isDone),
+      assigned_to: newTask.assignedTo || null,
+    };
+
+    if (supabase && isSupabaseConfigured) {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([payloadDoBanco])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("ERRO COMPLETO DO SUPABASE:", error);
+        alert(`Erro ao salvar: ${error.message} \nDetalhes: ${error.details || error.hint || ''}`);
+        return; // PARE AQUI! Não adicione na tela.
+      }
+
+      const createdTask: TaskItem = {
+        id: data.id,
+        description: data.description,
+        category: data.category,
+        dueDate: data.due_date || undefined,
+        isDone: Boolean(data.is_done),
+        assignedTo: data.assigned_to || undefined,
+      };
+
+      setTasks((prev) => [createdTask, ...prev]);
+      toast.success('✨ Tarefa registrada com sucesso!');
+      return;
     }
+
+    setTasks((prev) => [{ ...newTask, id: `task-local-${Date.now()}` }, ...prev]);
+    toast.success('✨ Tarefa registrada localmente!');
   };
 
   const handleUpdateTask = async (updatedTask: TaskItem) => {
@@ -664,35 +735,116 @@ export default function Home() {
     }
   };
 
-  // Delete handlers
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!canCreate) {
-      toast.error('⚠️ Apenas Regência (ADM) ou DEV podem excluir eventos.');
-      return;
+  // ============================================================================
+  // 1. FUNÇÃO DE DELETAR (BLINDADA)
+  // ============================================================================
+  const handleDeleteEvent = async (idParaDeletar: string) => {
+    try {
+      // Tenta deletar no banco E trazer o item deletado de volta
+      const { data, error } = await supabase!
+        .from('events')
+        .delete()
+        .eq('id', idParaDeletar)
+        .select();
+
+      // Se o banco retornar erro OU não deletar nada, aborta!
+      if (error || !data || data.length === 0) {
+        console.error("ERRO AO EXCLUIR NO BANCO:", error);
+        alert("O banco não permitiu a exclusão ou o evento não existe mais.");
+        return;
+      }
+
+      // Só remove da tela se o banco confirmou a exclusão
+      setEvents((prev) => prev.filter((evento) => evento.id !== idParaDeletar));
+      
+    } catch (err) {
+      console.error("Erro no trycatch de exclusão:", err);
     }
-    setEvents((prev) => prev.filter((e) => e.id !== eventId));
-    toast.success('🗑️ Evento excluído!');
-    await deleteEventFromSupabase(eventId);
   };
 
   const handleDeleteSong = async (songId: string) => {
     if (!canCreate) {
-      toast.error('⚠️ Apenas Regência (ADM) ou DEV podem excluir músicas.');
+      toast.error('Apenas Regência (ADM) ou DEV podem excluir músicas.');
       return;
     }
-    setSongs((prev) => prev.filter((s) => s.id !== songId));
-    toast.success('🗑️ Música excluída do repertório!');
-    await deleteSongFromSupabase(songId);
+
+    console.log(`🚀 [DEBUG EXCLUSÃO] ID recebido: "${songId}" | Tamanho do texto: ${songId?.length}`);
+
+    if (!songId) {
+      console.error("❌ ERRO CRÍTICO: Tentativa de excluir com ID vazio!");
+      return;
+    }
+
+    try {
+      if (supabase && isSupabaseConfigured) {
+        // Limpar registros dependentes no Supabase
+        await supabase.from('song_voice_kits').delete().eq('song_id', songId);
+
+        // Adicione o .select() no final!
+        const { data, error } = await supabase
+          .from('songs')
+          .delete()
+          .eq('id', songId)
+          .select();
+
+        console.log(`📊 [DEBUG RESULTADO BANCO] Data:`, data, `| Error:`, error);
+
+        // Validação estrita: Se deu erro OU se não deletou nenhuma linha
+        if (error || !data || data.length === 0) {
+          console.error("Falha ao excluir no banco (RLS ou ID não encontrado):", error);
+          toast.error("Não foi possível excluir a música no banco.");
+          return; // PARE AQUI! Não remova o item da tela.
+        }
+      }
+
+      // SÓ REMOVA DA TELA SE O BANCO REALMENTE DELETOU
+      setSongs((prev) => prev.filter((item) => item.id !== songId));
+      toast.success("Música excluída com sucesso!");
+    } catch (err) {
+      console.error("Erro na exclusão:", err);
+      toast.error("Ocorreu um erro inesperado ao tentar excluir.");
+    }
   };
 
   const handleDeleteTask = async (taskId: string) => {
     if (!canCreate) {
-      toast.error('⚠️ Apenas Regência (ADM) ou DEV podem excluir tarefas.');
+      toast.error('Apenas Regência (ADM) ou DEV podem excluir tarefas.');
       return;
     }
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    toast.success('🗑️ Tarefa excluída!');
-    await deleteTaskFromSupabase(taskId);
+
+    console.log(`🚀 [DEBUG EXCLUSÃO] ID recebido: "${taskId}" | Tamanho do texto: ${taskId?.length}`);
+
+    if (!taskId) {
+      console.error("❌ ERRO CRÍTICO: Tentativa de excluir com ID vazio!");
+      return;
+    }
+
+    try {
+      if (supabase && isSupabaseConfigured) {
+        // Adicione o .select() no final!
+        const { data, error } = await supabase
+          .from('tasks')
+          .delete()
+          .eq('id', taskId)
+          .select();
+
+        console.log(`📊 [DEBUG RESULTADO BANCO] Data:`, data, `| Error:`, error);
+
+        // Validação estrita: Se deu erro OU se não deletou nenhuma linha
+        if (error || !data || data.length === 0) {
+          console.error("Falha ao excluir no banco (RLS ou ID não encontrado):", error);
+          toast.error("Não foi possível excluir a tarefa no banco.");
+          return; // PARE AQUI! Não remova o item da tela.
+        }
+      }
+
+      // SÓ REMOVA DA TELA SE O BANCO REALMENTE DELETOU
+      setTasks((prev) => prev.filter((item) => item.id !== taskId));
+      toast.success("Tarefa excluída com sucesso!");
+    } catch (err) {
+      console.error("Erro na exclusão:", err);
+      toast.error("Ocorreu um erro inesperado ao tentar excluir.");
+    }
   };
 
   // Computations for Top Banners
@@ -989,6 +1141,16 @@ export default function Home() {
                 onOpenAddModal={() => handleOpenAddModal('event', true)}
                 canCreate={canCreate}
               />
+            ) : filteredEvents.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 rounded-2xl">
+                <CalendarX className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  Nenhum compromisso encontrado.
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Tente ajustar os filtros ou cadastre um novo evento.
+                </p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredEvents.map((evt) => (
@@ -1196,7 +1358,7 @@ export default function Home() {
         hideTypeSelector={modalHideTypeSelector}
         editingItem={editingItem}
         onClose={() => setIsAddModalOpen(false)}
-        onAddEvent={handleAddEvent}
+        onAddEvent={handleCreateEvent}
         onUpdateEvent={handleUpdateEvent}
         onAddSong={handleAddSong}
         onUpdateSong={handleUpdateSong}
