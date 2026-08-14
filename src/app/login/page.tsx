@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { GroupMember } from '@/data/groupMembers';
+import { fetchUserProfileById, mapProfileToGroupMember } from '@/services/api';
 import { toast } from 'sonner';
 import { 
   Mail, 
@@ -49,36 +50,40 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
-  // 🔄 Captura de sessão ativa via Supabase Auth State Change
-  useEffect(() => {
-    if (supabase && isSupabaseConfigured) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user) {
-          window.location.href = '/';
-        }
-      });
-      return () => subscription.unsubscribe();
-    }
-  }, []);
-
   // 🔄 Redirecionamento Automático para Usuários Logados (Sessão Salva)
+  // Nota: propositalmente NÃO há um listener de onAuthStateChange redirecionando
+  // por conta própria aqui. Esse listener existia antes e redirecionava para "/"
+  // sempre que havia uma sessão do Supabase, SEM checar se o perfil existia em
+  // public.profiles. Como a página "/" só aceita a sessão se achar o perfil
+  // (senão manda de volta para "/login"), qualquer instabilidade momentânea na
+  // busca do perfil criava um loop infinito "/" → "/login" → "/" → "/login".
+  // Login em si (handleLogin) já redireciona explicitamente após validar o
+  // perfil, e o efeito abaixo cobre o caso de sessão já ativa ao abrir a página.
   useEffect(() => {
     const checkActiveSession = async () => {
       try {
+        if (supabase && isSupabaseConfigured) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.user) {
+            const { profile } = await fetchUserProfileById(data.session.user.id);
+            if (profile) {
+              const memberObj = mapProfileToGroupMember(profile);
+              localStorage.setItem('ellos_current_member', JSON.stringify(memberObj));
+              router.replace('/');
+              return;
+            } else {
+              localStorage.removeItem('ellos_current_member');
+              sessionStorage.removeItem('ellos_current_member');
+            }
+          }
+        }
+
         const localSaved = localStorage.getItem('ellos_current_member');
         const sessionSaved = sessionStorage.getItem('ellos_current_member');
 
         if (localSaved || sessionSaved) {
           router.replace('/');
           return;
-        }
-
-        if (supabase && isSupabaseConfigured) {
-          const { data } = await supabase.auth.getSession();
-          if (data.session) {
-            router.replace('/');
-            return;
-          }
         }
       } catch (err) {
         console.warn('Erro ao verificar sessão salva:', err);
@@ -137,7 +142,11 @@ export default function LoginPage() {
 
     try {
       if (supabase && isSupabaseConfigured) {
-        // 🔒 Autenticação Estrita via Supabase Auth
+        // 1. Invalida cache local do perfil anterior antes de reautenticar
+        localStorage.removeItem('ellos_current_member');
+        sessionStorage.removeItem('ellos_current_member');
+
+        // 2. 🔒 Autenticação Estrita via Supabase Auth
         const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
           email: emailClean,
           password: password.trim(),
@@ -150,34 +159,21 @@ export default function LoginPage() {
           return;
         }
 
-        // Buscar dados atualizados do perfil em public.profiles
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authData.user.id)
-          .single();
+        // 3. Force a busca exata pelo user.id na tabela public.profiles (Strict Session User ID Query)
+        const { profile, error: profileErr } = await fetchUserProfileById(authData.user.id);
 
-        const memberObj: GroupMember = profile
-          ? {
-              id: profile.id,
-              email: profile.email,
-              name: profile.name,
-              voice: profile.voice,
-              role: profile.role,
-              phone: profile.phone,
-              isActive: profile.is_active !== false,
-            }
-          : {
-              id: authData.user.id,
-              email: emailClean,
-              name: authData.user.user_metadata?.name || 'Integrante',
-              voice: authData.user.user_metadata?.voice || 'Soprano',
-              role: authData.user.user_metadata?.role || 'MEMBER',
-              phone: authData.user.user_metadata?.phone,
-              isActive: true,
-            };
+        if (profileErr || !profile) {
+          const notFoundError = 'Perfil do usuário não foi encontrado no banco de dados. Entre em contato com a regência.';
+          setErrorMessage(notFoundError);
+          toast.error(notFoundError);
+          setIsLoading(false);
+          return;
+        }
 
-        // Salvar sessão local conforme preferência
+        // 4. Mapear perfil oficial e atualizar estado reativo global
+        const memberObj = mapProfileToGroupMember(profile);
+
+        // Salvar sessão local com dados atualizados do Supabase (nome e role oficial como DEV/ADM/etc)
         if (rememberDevice) {
           localStorage.setItem('ellos_current_member', JSON.stringify(memberObj));
           sessionStorage.removeItem('ellos_current_member');

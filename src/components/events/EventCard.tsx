@@ -39,10 +39,11 @@ interface EventCardProps {
   event: EventItem;
   songs?: SongItem[];
   currentMember?: GroupMember | null;
-  onToggleVote?: (eventId: string, member?: GroupMember | null) => void;
+  onToggleVote?: (eventId: string, member?: GroupMember | null, statusOverride?: 'YES' | 'NO' | 'MAYBE', note?: string) => Promise<void> | void;
   onEditEvent?: (event: EventItem) => void;
   onDeleteEvent?: (eventId: string) => void;
   eventResponses?: EventResponseRow[];
+  onRefetchResponses?: () => Promise<void> | void;
 }
 
 export const EventCard: React.FC<EventCardProps> = ({ 
@@ -52,10 +53,31 @@ export const EventCard: React.FC<EventCardProps> = ({
   onToggleVote, 
   onEditEvent, 
   onDeleteEvent,
-  eventResponses = []
+  eventResponses = [],
+  onRefetchResponses
 }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'schedule' | 'carpool'>('info');
   const [copiedTechSheet, setCopiedTechSheet] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleConfirmPresence = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (event.isVotingClosed || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      if (onToggleVote) {
+        await onToggleVote(event.id, currentMember);
+      }
+      if (onRefetchResponses) {
+        await onRefetchResponses();
+      }
+    } catch (err) {
+      console.error('Erro ao confirmar presença:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Carpool local state management for quick interaction
   const [localDrivers, setLocalDrivers] = useState(event.drivers || []);
@@ -358,15 +380,22 @@ _Gerado via Ellos Hub_`;
 
                 {/* Botão Votar / Confirmar */}
                 <button
-                  disabled={event.isVotingClosed}
-                  onClick={() => onToggleVote && onToggleVote(event.id, currentMember)}
+                  disabled={event.isVotingClosed || isSubmitting}
+                  onClick={handleConfirmPresence}
                   className={`w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                    event.userVoted
+                    isSubmitting
+                      ? 'opacity-60 bg-slate-400 text-slate-900 cursor-not-allowed'
+                      : event.userVoted
                       ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs'
                       : 'bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 font-semibold shadow-xs hover:brightness-110'
                   }`}
                 >
-                  {event.isVotingClosed ? (
+                  {isSubmitting ? (
+                    <>
+                      <Sparkles className="w-4 h-4 animate-spin text-slate-900" />
+                      <span>Salvando...</span>
+                    </>
+                  ) : event.isVotingClosed ? (
                     <span>Votação Encerrada pela Regência</span>
                   ) : event.userVoted ? (
                     <>

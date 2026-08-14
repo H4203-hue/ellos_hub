@@ -51,14 +51,27 @@ export async function POST(req: Request) {
     const supabaseAdmin = getAdminClient();
 
     // 1. Criar no Supabase Auth Admin
-    const { data: authData } = await supabaseAdmin.auth.admin.createUser({
+    const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
       email: emailClean,
       password: userPassword,
       email_confirm: true,
       user_metadata: { name, voice, role, phone },
-    }).catch(() => ({ data: null }));
+    });
 
-    const newUserId = authData?.user?.id || `prof-${Date.now()}`;
+    // Nunca cair para um id sintético (`prof-...`): isso cria um perfil que nunca
+    // vai bater com nenhum session.user.id real e reproduz o bug do badge/"Perfil não encontrado".
+    if (authCreateError || !authData?.user?.id) {
+      return NextResponse.json(
+        {
+          error:
+            authCreateError?.message ||
+            'Falha ao criar o usuário no Supabase Auth. Verifique se o e-mail já existe ou se SUPABASE_SERVICE_ROLE_KEY está configurada corretamente.',
+        },
+        { status: 400 }
+      );
+    }
+
+    const newUserId = authData.user.id;
 
     // 2. Inserir em public.profiles
     const { data: profile } = await supabaseAdmin

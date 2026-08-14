@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { mockEvents, mockSongs, mockTasks } from '@/data/mockData';
 import { EventItem, SongItem, TaskItem } from '@/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { deleteEventFromSupabase, deleteSongFromSupabase, deleteTaskFromSupabase } from '@/services/api';
+import { 
+  deleteEventFromSupabase, 
+  deleteSongFromSupabase, 
+  deleteTaskFromSupabase,
+  fetchUserProfileById,
+  mapProfileToGroupMember
+} from '@/services/api';
 import { Navbar } from '@/components/layout/Navbar';
 import { SidebarDrawer } from '@/components/layout/SidebarDrawer';
 import { EventCard, EventResponseRow } from '@/components/events/EventCard';
@@ -84,52 +90,41 @@ export default function Home() {
       }
 
       try {
+        // 2. Verificar sessão ativa do Supabase Auth (busca estrita pelo user.id)
+        if (supabase && isSupabaseConfigured) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session?.user) {
+            const user = sessionData.session.user;
+            const { profile, error: profileErr } = await fetchUserProfileById(user.id);
+
+            if (profile && !profileErr) {
+              const memberObj = mapProfileToGroupMember(profile);
+              // Atualiza cache local e força sincronização com os dados mais recentes do Supabase (DEV / ADM / etc)
+              localStorage.setItem('ellos_current_member', JSON.stringify(memberObj));
+              setCurrentMember(memberObj);
+              setSimulatedRole(memberObj.role as 'DEV' | 'ADM' | 'MEDIA' | 'MEMBER');
+              return;
+            } else {
+              // Limpeza de cache e prevenção de fallback mockado
+              localStorage.removeItem('ellos_current_member');
+              sessionStorage.removeItem('ellos_current_member');
+              toast.error('Perfil de usuário não foi encontrado no sistema. Por favor, faça login novamente.');
+              router.replace('/login');
+              return;
+            }
+          }
+        }
+
+        // 3. Fallback de sessão local caso o Supabase não esteja disponível/configurado
         const localSavedStr = localStorage.getItem('ellos_current_member');
         const sessionSavedStr = sessionStorage.getItem('ellos_current_member');
         const savedMemberStr = localSavedStr || sessionSavedStr;
 
         if (savedMemberStr) {
           const parsed: GroupMember = JSON.parse(savedMemberStr);
-          if (parsed && parsed.name) {
+          if (parsed && parsed.name && parsed.id) {
             setCurrentMember(parsed);
             setSimulatedRole(parsed.role as 'DEV' | 'ADM' | 'MEDIA' | 'MEMBER');
-            return;
-          }
-        }
-
-        // 2. Se não houver localStorage, verificar sessão do Supabase Auth (ex: login com Google)
-        if (supabase && isSupabaseConfigured) {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData.session?.user) {
-            const user = sessionData.session.user;
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', user.id)
-              .single();
-
-            const googleMember: GroupMember = profile
-              ? {
-                  id: profile.id,
-                  email: profile.email,
-                  name: profile.name,
-                  voice: profile.voice,
-                  role: profile.role,
-                  phone: profile.phone,
-                  isActive: profile.is_active !== false,
-                }
-              : {
-                  id: user.id,
-                  email: user.email || '',
-                  name: user.user_metadata?.full_name || user.user_metadata?.name || 'Integrante',
-                  voice: 'Geral',
-                  role: 'MEMBER',
-                  isActive: true,
-                };
-
-            setCurrentMember(googleMember);
-            setSimulatedRole(googleMember.role as 'DEV' | 'ADM' | 'MEDIA' | 'MEMBER');
-            localStorage.setItem('ellos_current_member', JSON.stringify(googleMember));
             return;
           }
         }
@@ -459,14 +454,19 @@ export default function Home() {
     });
 
     if (supabase) {
-      await supabase.from('event_responses').upsert({
-        event_id: eventId,
-        member_id: activeMember.id,
-        member_name: activeMember.name,
-        voice: activeMember.voice,
-        status: targetStatus,
-        note: note || null,
-      });
+      await supabase.from('event_responses').upsert(
+        {
+          event_id: eventId,
+          member_id: activeMember.id,
+          member_name: activeMember.name,
+          voice: activeMember.voice,
+          status: targetStatus,
+          note: note || null,
+        },
+        { onConflict: 'event_id,member_id' }
+      );
+
+      await fetchResponsesFromSupabase();
 
       if (updatedEvent) {
         await supabase.from('events').upsert({
@@ -733,27 +733,9 @@ export default function Home() {
 
       {/* Main Container Scrollable (Fit & Clean) */}
       <main className="flex-1 overflow-y-auto no-scrollbar max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        {/* Database Status & Active Member Indicator Bar */}
+        {/* Active Member & Summary Indicator Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 px-4 py-2.5 rounded-xl text-xs gap-2 shrink-0">
           <div className="flex flex-wrap items-center gap-2">
-            <Database className="w-4 h-4 text-gold-500 shrink-0" />
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
-              Banco de Dados:
-            </span>
-            {dbStatus === 'supabase' ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Supabase Realtime
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                Modo Local (Demo)
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 ml-auto sm:ml-0">
             {currentMember && (
               <span className="text-[11px] text-slate-600 dark:text-gold-300 font-semibold bg-slate-100 dark:bg-navy-950 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-gold-500/20 flex items-center gap-1">
                 <span>Membro Logado:</span>
@@ -761,16 +743,16 @@ export default function Home() {
               </span>
             )}
 
-            {currentMember?.role === 'DEV' && (
-              <span className="text-[11px] font-bold bg-amber-500/20 text-gold-300 px-2 py-1 rounded-lg border border-amber-500/30 flex items-center gap-1">
+            {currentMember?.role === 'DEV' && simulatedRole !== currentMember.role && (
+              <span className="text-[11px] font-bold bg-amber-500/20 text-gold-300 px-2 py-1 rounded-lg border border-amber-500/30 flex items-center gap-1 animate-in fade-in duration-150">
                 <Eye className="w-3 h-3 text-gold-400" />
-                <span>Simulando: <strong>{effectiveRole}</strong></span>
+                <span>Simulando: <strong>{simulatedRole}</strong></span>
               </span>
             )}
+          </div>
 
-            <span className="text-[11px] text-slate-400 hidden lg:inline">
-              {events.length} eventos • {songs.length} músicas • {tasks.length} tarefas
-            </span>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium ml-auto sm:ml-0">
+            {events.length} eventos • {songs.length} músicas • {tasks.length} tarefas
           </div>
         </div>
 
@@ -1023,6 +1005,7 @@ export default function Home() {
                       onEditEvent={canCreate ? handleOpenEditEvent : undefined}
                       onDeleteEvent={canCreate ? handleDeleteEvent : undefined}
                       eventResponses={eventResponses}
+                      onRefetchResponses={fetchResponsesFromSupabase}
                     />
                   </div>
                 ))}

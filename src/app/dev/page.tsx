@@ -287,8 +287,13 @@ export default function DevPage() {
       });
       const data = await res.json();
 
+      if (!res.ok || data.error || !data.user?.id) {
+        toast.error(data.error || 'Erro ao cadastrar novo integrante no Supabase Auth.');
+        return;
+      }
+
       const newMember: GroupMember = {
-        id: data.user?.id || `prof-${Date.now()}`,
+        id: data.user.id,
         email: emailFormatted,
         name: nameFormatted,
         voice: newVoice,
@@ -412,17 +417,38 @@ export default function DevPage() {
       {/* Main Container Card */}
       <main className="max-w-5xl mx-auto w-full space-y-6">
         <div className="bg-navy-900/90 backdrop-blur-md border border-amber-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-          <div className="space-y-2 border-b border-navy-800 pb-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-gold-300 border border-amber-500/20">
-              <ShieldCheck className="w-3.5 h-3.5 text-gold-400" />
-              <span>Painel do Engenheiro &amp; Administrador (DEV Mode)</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-navy-800 pb-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-gold-300 border border-amber-500/20">
+                <ShieldCheck className="w-3.5 h-3.5 text-gold-400" />
+                <span>Painel do Engenheiro &amp; Administrador (DEV Mode)</span>
+              </div>
+              <h1 className="text-2xl font-black text-white tracking-tight">
+                Suíte Administrativa &amp; Controle de APIs
+              </h1>
+              <p className="text-xs text-slate-300">
+                Gestão dos integrantes oficiais, reset de senhas, banco de dados e tags de repertório.
+              </p>
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">
-              Suíte Administrativa &amp; Controle de APIs
-            </h1>
-            <p className="text-xs text-slate-300">
-              Gestão dos 9 integrantes oficiais, reset de senhas, banco de dados e tags de repertório.
-            </p>
+
+            {/* Badge de Telemetria de Banco de Dados */}
+            <div className="shrink-0 bg-navy-950/80 border border-amber-500/20 px-3.5 py-2 rounded-xl text-xs flex items-center gap-2">
+              <Database className="w-4 h-4 text-gold-500 shrink-0" />
+              <span className="font-semibold text-slate-300">
+                Banco de Dados:
+              </span>
+              {isSupabaseConfigured ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Supabase Realtime
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  Modo Local (Demo)
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Sub-Navegação por Abas do Painel DEV */}

@@ -1,5 +1,34 @@
 import { supabase } from '@/lib/supabase';
 import { EventItem, SongItem, TaskItem } from '@/types';
+import { GroupMember } from '@/data/groupMembers';
+
+/**
+ * Busca estritamente o perfil do usuário logado na tabela `public.profiles` pelo ID da sessão ativa.
+ */
+export const fetchUserProfileById = async (userId: string) => {
+  if (!supabase) return { profile: null, error: new Error('Supabase não configurado') };
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  return { profile, error };
+};
+
+/**
+ * Mapeia o registro da tabela public.profiles para o tipo GroupMember.
+ */
+export const mapProfileToGroupMember = (profile: any): GroupMember => ({
+  id: profile.id,
+  email: profile.email,
+  name: profile.name,
+  voice: profile.voice || 'Geral',
+  role: profile.role,
+  phone: profile.phone,
+  isActive: profile.is_active !== false,
+});
 
 // Serviço de deleção de eventos
 export const deleteEventFromSupabase = async (id: string) => {

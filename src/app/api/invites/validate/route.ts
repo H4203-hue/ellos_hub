@@ -107,20 +107,32 @@ export async function POST(req: Request) {
     }
 
     const userRole = tokenRecord?.role || 'MEMBER';
-    const newUserId = `prof-${Date.now()}`;
 
     // 2. Criar no Supabase Auth Admin
-    const { data: authData } = await supabaseAdmin.auth.admin.createUser({
+    const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
       email: emailClean,
       password: String(password).trim(),
       email_confirm: true,
       user_metadata: { name, voice, role: userRole, phone },
-    }).catch((err) => {
-      console.warn('Supabase auth create user notice:', err);
-      return { data: null };
     });
 
-    const finalId = authData?.user?.id || newUserId;
+    // Nunca cair para um id sintético (`prof-...`): um perfil criado com esse id nunca
+    // vai bater com o session.user.id real, e a pessoa nunca conseguirá logar de novo
+    // mesmo com o cadastro "bem-sucedido" (foi essa a causa raiz do bug do badge MEMBER).
+    if (authCreateError || !authData?.user?.id) {
+      console.warn('Supabase auth create user error:', authCreateError);
+      return NextResponse.json(
+        {
+          error:
+            authCreateError?.message === 'User already registered'
+              ? 'Este e-mail já possui uma conta. Tente fazer login em vez de se cadastrar novamente.'
+              : authCreateError?.message || 'Falha ao criar a conta de autenticação. Tente novamente.',
+        },
+        { status: 400 }
+      );
+    }
+
+    const finalId = authData.user.id;
 
     // 3. Registrar em public.profiles
     await supabaseAdmin.from('profiles').upsert({
