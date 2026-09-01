@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireWorkspaceRole, AuthError } from '@/lib/auth/requireWorkspaceRole';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 const getAdminClient = () => {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY não está configurada no ambiente do servidor.');
+  }
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
@@ -15,6 +19,7 @@ const getAdminClient = () => {
 
 export async function POST(req: Request) {
   try {
+    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
     const body = await req.json();
     const { userId, email, newPassword } = body;
 
@@ -58,6 +63,9 @@ export async function POST(req: Request) {
       tempPassword,
     });
   } catch (err: unknown) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const errorMessage = err instanceof Error ? err.message : 'Erro ao resetar senha';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }

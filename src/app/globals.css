@@ -3,13 +3,16 @@
 @variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f223d;
+  --background: #F9FAFB;
+  --foreground: #111827;
+  --theme-primary: #D4AF37;
+  --theme-primary-light: #F3E5AB;
+  --theme-primary-dark: #AA8822;
 }
 
 .dark {
-  --background: #0f223d;
-  --foreground: #f1f5f9;
+  --background: #111827;
+  --foreground: #F9FAFB;
 }
 
 @theme inline {
@@ -18,21 +21,41 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Ellos — Azul Institucional (Deep Navy) */
-  --color-navy-950: #0f223d;
-  --color-navy-900: #1b365d;
-  --color-navy-800: #24406b;
-  --color-navy-700: #2d4a7a;
-  --color-navy-600: #3a5a8c;
-  --color-navy-500: #4a6fa5;
+  /* Tema Dinâmico White-Label (SaaS Multitenant) */
+  --color-theme-primary: var(--theme-primary);
+  --color-theme-primary-light: var(--theme-primary-light);
+  --color-theme-primary-dark: var(--theme-primary-dark);
 
-  /* Ellos — Dourado Metálico / Champagne (Gold Accent) */
-  --color-gold-300: #f0dfaf;
-  --color-gold-400: #e5c378;
-  --color-gold-500: #d4af37;
-  --color-gold-600: #bf9b30;
-  --color-gold-700: #b89028;
-  --color-gold-800: #8c6e20;
+  /* Mapeamento de retrocompatibilidade para classes legadas */
+  --color-ellos-gold: var(--theme-primary);
+  --color-ellos-gold-light: var(--theme-primary-light);
+  --color-ellos-gold-dark: var(--theme-primary-dark);
+
+  --color-ellos-navy: #111827;
+  --color-ellos-navy-surface: #1F2937;
+  --color-ellos-navy-sidebar: #0F172A;
+
+  --color-ellos-light: #F9FAFB;
+  --color-ellos-light-surface: #FFFFFF;
+
+  --color-status-confirmed: #3B82F6;
+  --color-status-success: #10B981;
+  --color-status-voting: #F59E0B;
+
+  /* Retrocompatibilidade com utilitários legados */
+  --color-navy-950: #0F172A;
+  --color-navy-900: #111827;
+  --color-navy-800: #1F2937;
+  --color-navy-700: #374151;
+  --color-navy-600: #4B5563;
+  --color-navy-500: #6B7280;
+
+  --color-gold-300: var(--theme-primary-light);
+  --color-gold-400: var(--theme-primary);
+  --color-gold-500: var(--theme-primary);
+  --color-gold-600: var(--theme-primary);
+  --color-gold-700: var(--theme-primary-dark);
+  --color-gold-800: var(--theme-primary-dark);
 }
 
 /* Remove a scrollbar vertical de toda a aplicação mantendo a rolagem ativa por mouse/touch */

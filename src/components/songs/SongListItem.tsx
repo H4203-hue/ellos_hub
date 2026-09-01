@@ -43,7 +43,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
       case 'TO_LEARN':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-            <Sparkles className="w-3.5 h-3.5 text-gold-600 dark:text-gold-400" />
+            <Sparkles className="w-3.5 h-3.5 text-theme-primary dark:text-theme-primary" />
             A Aprender
           </span>
         );
@@ -70,7 +70,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
   const isHighlightTag = (tag: string) => /autoral|ellos/i.test(tag);
 
   return (
-    <div className="relative bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 rounded-2xl p-5 shadow-xs hover:shadow-md hover:border-navy-600/30 dark:hover:border-gold-500/40 transition-all duration-200 flex flex-col md:flex-row md:items-start justify-between gap-5">
+    <div className="relative bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 rounded-2xl p-5 shadow-xs hover:shadow-md hover:border-navy-600/30 dark:hover:border-theme-primary/40 transition-all duration-200 flex flex-col md:flex-row md:items-start justify-between gap-5">
       {/* Botões de Editar & Excluir no Canto Superior Direito */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
         {onEditSong && (
@@ -105,7 +105,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
       <div className="flex-1 space-y-3 pr-2 sm:pr-4">
         <div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Music className="w-5 h-5 text-navy-700 dark:text-gold-400 shrink-0" />
+            <Music className="w-5 h-5 text-navy-700 dark:text-theme-primary shrink-0" />
             <span>{song.title}</span>
           </h3>
           {song.artistOrGroup && (
@@ -195,7 +195,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
         {song.voiceKits && song.voiceKits.length > 0 && (
           <div className="pt-2 border-t border-slate-100 dark:border-navy-800/60">
             <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-1.5">
-              <Headphones className="w-3.5 h-3.5 text-navy-600 dark:text-gold-400" />
+              <Headphones className="w-3.5 h-3.5 text-navy-600 dark:text-theme-primary" />
               Kits por Naipe:
             </span>
             <div className="flex flex-wrap gap-1.5">

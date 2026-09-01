@@ -151,7 +151,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative w-full max-w-3xl bg-[#1B365D] border border-amber-500/30 rounded-3xl shadow-2xl overflow-hidden text-slate-100 flex flex-col max-h-[90vh] z-10"
+          className="relative w-full max-w-3xl bg-[#1F2937] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden text-slate-100 flex flex-col max-h-[90vh] z-10"
         >
           {/* Header Notion-Style com Capa Dourada / Status */}
           <div className="bg-gradient-to-r from-navy-900 via-navy-950 to-navy-900 px-6 py-5 border-b border-amber-500/20 relative">
@@ -164,7 +164,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
 
             <div className="space-y-2 max-w-xl">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gold-500/15 text-gold-300 border border-gold-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-theme-primary/ text-theme-primary border border-theme-primary/">
                   {event.category}
                 </span>
 
@@ -175,7 +175,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                   </span>
                 )}
                 {event.status === 'PROPOSAL' && (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-gold-300 border border-amber-500/30 flex items-center gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-theme-primary border border-amber-500/30 flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
                     Em Votação
                   </span>
@@ -201,7 +201,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
 
               <p className="text-xs text-slate-300 flex flex-wrap items-center gap-3">
                 {event.date && (
-                  <span className="flex items-center gap-1 text-gold-300 font-semibold">
+                  <span className="flex items-center gap-1 text-theme-primary font-semibold">
                     <CalendarIcon className="w-3.5 h-3.5" />
                     {event.date}
                   </span>
@@ -222,7 +222,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
               onClick={() => setActiveTab('geral')}
               className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border-b-2 ${
                 activeTab === 'geral'
-                  ? 'border-gold-400 text-gold-300 bg-navy-900'
+                  ? 'border-gold-400 text-theme-primary bg-navy-900'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -234,7 +234,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
               onClick={() => setActiveTab('presenca')}
               className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border-b-2 ${
                 activeTab === 'presenca'
-                  ? 'border-gold-400 text-gold-300 bg-navy-900'
+                  ? 'border-gold-400 text-theme-primary bg-navy-900'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -247,7 +247,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                 onClick={() => setActiveTab('adm')}
                 className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border-b-2 ${
                   activeTab === 'adm'
-                    ? 'border-gold-400 text-gold-300 bg-navy-900'
+                    ? 'border-gold-400 text-theme-primary bg-navy-900'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -260,7 +260,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
               onClick={() => setActiveTab('repertorio')}
               className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border-b-2 ${
                 activeTab === 'repertorio'
-                  ? 'border-gold-400 text-gold-300 bg-navy-900'
+                  ? 'border-gold-400 text-theme-primary bg-navy-900'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -278,7 +278,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                 <div className="bg-navy-950/70 p-4 sm:p-5 rounded-2xl border border-amber-500/20 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
                         Localização &amp; Endereço
                       </span>
@@ -295,9 +295,9 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                           href={googleMapsUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 border border-gold-500/20 text-gold-300 flex items-center gap-1.5 transition-all cursor-pointer"
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 border border-theme-primary/ text-theme-primary flex items-center gap-1.5 transition-all cursor-pointer"
                         >
-                          <Navigation className="w-3.5 h-3.5 text-gold-400" />
+                          <Navigation className="w-3.5 h-3.5 text-theme-primary" />
                           <span>Abrir no Google Maps</span>
                           <ExternalLink className="w-3 h-3 opacity-60" />
                         </a>
@@ -322,7 +322,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Traje */}
                   <div className="bg-navy-950/70 p-4 rounded-2xl border border-amber-500/20 space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                       <Shirt className="w-4 h-4" />
                       Traje do Dia (Dress Code)
                     </span>
@@ -333,7 +333,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
 
                   {/* Horário de Chegada */}
                   <div className="bg-navy-950/70 p-4 rounded-2xl border border-amber-500/20 space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
                       Horário de Chegada &amp; Som
                     </span>
@@ -345,7 +345,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
 
                 {/* Mapa de Caronas */}
                 <div className="bg-navy-950/70 p-4 sm:p-5 rounded-2xl border border-amber-500/20 space-y-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                     <Car className="w-4 h-4" />
                     Mapa de Caronas &amp; Deslocamento
                   </span>
@@ -360,7 +360,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                           <div>
                             <span className="font-bold text-white block">🚘 {drv.name}</span>
                             <span className="text-[11px] text-slate-400">
-                              Vagas disponíveis: <strong className="text-gold-300">{drv.spots}</strong>
+                              Vagas disponíveis: <strong className="text-theme-primary">{drv.spots}</strong>
                             </span>
                           </div>
                         </div>
@@ -381,7 +381,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                 <div className="bg-navy-950/70 p-5 rounded-2xl border border-amber-500/20 space-y-4">
                   <div className="space-y-1">
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-gold-400" />
+                      <Sparkles className="w-4 h-4 text-theme-primary" />
                       Confirmação Rápida de Presença em 1 Toque
                     </h3>
                     <p className="text-xs text-slate-300">
@@ -391,9 +391,9 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
 
                   {/* Voto Atual do Integrante */}
                   {myResponse && (
-                    <div className="p-3 rounded-xl bg-navy-900 border border-gold-500/30 text-xs flex items-center gap-2">
+                    <div className="p-3 rounded-xl bg-navy-900 border border-theme-primary/ text-xs flex items-center gap-2">
                       <span className="font-bold text-slate-300">Seu voto registrado:</span>
-                      <span className="font-black text-gold-300 bg-gold-500/20 px-2.5 py-0.5 rounded-md">
+                      <span className="font-black text-theme-primary bg-theme-primary/ px-2.5 py-0.5 rounded-md">
                         {myResponse.status === 'YES' && '🟢 Posso ir (Confirmado)'}
                         {myResponse.status === 'MAYBE' && '🟡 Plantão / Escala'}
                         {myResponse.status === 'NO' && '🔴 Não vou'}
@@ -411,7 +411,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                       placeholder="Ex: Chegarei 15min depois / Caso seja escalado no trabalho..."
                       value={voteNote}
                       onChange={(e) => setVoteNote(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-900 text-slate-100 text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-gold-500/50"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-900 text-slate-100 text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-theme-primary/50"
                     />
                   </div>
 
@@ -433,9 +433,9 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleVoteAction('MAYBE')}
                       disabled={isVoting || event.isVotingClosed}
-                      className="py-3 px-4 rounded-2xl text-xs font-extrabold bg-amber-500/20 hover:bg-amber-500/30 text-gold-300 border border-amber-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="py-3 px-4 rounded-2xl text-xs font-extrabold bg-amber-500/20 hover:bg-amber-500/30 text-theme-primary border border-amber-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
-                      <HelpCircle className="w-4 h-4 text-gold-400" />
+                      <HelpCircle className="w-4 h-4 text-theme-primary" />
                       <span>Plantão / Escala</span>
                     </motion.button>
 
@@ -454,7 +454,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
 
                 {/* Resumo de Respostas por Integrante */}
                 <div className="bg-navy-950/70 p-5 rounded-2xl border border-amber-500/20 space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-gold-400">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-theme-primary">
                     Respostas dos Integrantes ({currentEventResponses.length})
                   </h4>
 
@@ -470,7 +470,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                               {r.member_name} <span className="font-normal text-slate-400">({r.voice})</span>
                             </span>
                             {r.note && (
-                              <span className="text-[11px] text-gold-300/90 block italic">
+                              <span className="text-[11px] text-theme-primary/90 block italic">
                                 &quot;{r.note}&quot;
                               </span>
                             )}
@@ -522,7 +522,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                 {/* Microfones & Cronograma */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-navy-950/70 p-4 rounded-2xl border border-amber-500/20 space-y-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                       <Mic className="w-4 h-4" />
                       Distribuição de Microfones
                     </span>
@@ -532,7 +532,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                   </div>
 
                   <div className="bg-navy-950/70 p-4 rounded-2xl border border-amber-500/20 space-y-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
                       Prazo Limite de Votação
                     </span>
@@ -544,7 +544,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
 
                 {/* Cronograma / Schedule */}
                 <div className="bg-navy-950/70 p-5 rounded-2xl border border-amber-500/20 space-y-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                     <FileText className="w-4 h-4" />
                     Cronograma Detalhado do Compromisso
                   </span>
@@ -556,7 +556,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                           key={idx}
                           className="p-3 rounded-xl bg-navy-900 border border-navy-800 text-xs flex items-center gap-3"
                         >
-                          <span className="font-black text-gold-300 bg-gold-500/10 px-2.5 py-1 rounded-md">
+                          <span className="font-black text-theme-primary bg-theme-primary/ px-2.5 py-1 rounded-md">
                             {item.time}
                           </span>
                           <span className="font-medium text-white">{item.activity}</span>
@@ -574,7 +574,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
             {activeTab === 'repertorio' && (
               <div className="space-y-4 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                     <Music className="w-4 h-4" />
                     Músicas Escaladas ({scheduledSongs.length})
                   </h3>
@@ -601,7 +601,7 @@ export const EventNotionModal: React.FC<EventNotionModalProps> = ({
                             href={song.generalDriveFolderUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-gold-500/10 hover:bg-gold-500/20 text-gold-300 border border-gold-500/30 flex items-center gap-1 transition-all"
+                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-theme-primary/ hover:bg-theme-primary/20 text-theme-primary border border-theme-primary/ flex items-center gap-1 transition-all"
                           >
                             <span>Pasta Geral Drive</span>
                             <ExternalLink className="w-3 h-3 opacity-70" />

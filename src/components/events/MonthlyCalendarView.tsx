@@ -3,17 +3,14 @@
 import React, { useState } from 'react';
 import { EventItem } from '@/types';
 import { 
+  Calendar as CalendarIcon, 
   ChevronLeft, 
   ChevronRight, 
-  Calendar as CalendarIcon, 
   Clock, 
   MapPin, 
-  CheckCircle2, 
-  HelpCircle, 
+  Plus, 
   Sparkles,
-  Plus,
-  ArrowRight,
-  Shirt
+  ArrowRight
 } from 'lucide-react';
 
 interface MonthlyCalendarViewProps {
@@ -29,24 +26,26 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
   onOpenAddModal,
   canCreate,
 }) => {
-  const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [selectedDayNum, setSelectedDayNum] = useState<number | null>(() => new Date().getDate());
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDayNum, setSelectedDayNum] = useState<number | null>(new Date().getDate());
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
+  // Nomes dos meses em PT-BR
   const monthNames = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
   const daysOfWeekFull = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  const daysOfWeekShort = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+  const daysOfWeekLetter = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
   // Primeiro dia do mês e total de dias
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+  // Navegação
   const prevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
     setSelectedDayNum(null);
@@ -63,28 +62,26 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
     setSelectedDayNum(today.getDate());
   };
 
-  // Parse strings de data "YYYY-MM-DD"
-  const getEventsForDay = (dayNumber: number) => {
-    const formattedMonth = String(month + 1).padStart(2, '0');
-    const formattedDay = String(dayNumber).padStart(2, '0');
-    const targetDateStr = `${year}-${formattedMonth}-${formattedDay}`;
-
+  // Filtrar eventos por dia
+  const getEventsForDay = (day: number) => {
     return events.filter((evt) => {
       if (!evt.date) return false;
-      return evt.date === targetDateStr;
+      const parts = evt.date.split('-');
+      if (parts.length !== 3) return false;
+      const evtYear = parseInt(parts[0], 10);
+      const evtMonth = parseInt(parts[1], 10) - 1;
+      const evtDay = parseInt(parts[2], 10);
+      return evtYear === year && evtMonth === month && evtDay === day;
     });
   };
 
-  const isToday = (dayNumber: number) => {
+  const isToday = (day: number) => {
     const today = new Date();
-    return (
-      today.getDate() === dayNumber &&
-      today.getMonth() === month &&
-      today.getFullYear() === year
-    );
+    return today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
   };
 
-  const getStatusBadge = (status: string) => {
+  // Badge Status Info
+  const getStatusBadge = (status: EventItem['status']) => {
     switch (status) {
       case 'CONFIRMED':
         return {
@@ -96,7 +93,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
         return {
           label: 'Em Votação',
           dotColor: 'bg-amber-500',
-          badgeStyle: 'bg-amber-500/10 text-amber-700 dark:text-gold-300 border-amber-500/30',
+          badgeStyle: 'bg-amber-500/10 text-amber-700 dark:text-theme-primary border-amber-500/30',
         };
       default:
         return {
@@ -120,16 +117,16 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
   const selectedEvents = selectedDayNum ? getEventsForDay(selectedDayNum) : [];
 
   return (
-    <div className="bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 rounded-3xl p-3.5 sm:p-6 shadow-xl space-y-4 font-sans transition-all">
+    <div className="bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-theme-primary/20 rounded-3xl p-3.5 sm:p-6 shadow-xl space-y-4 font-sans transition-all">
       {/* Top Header do Calendário Mensal */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-200 dark:border-navy-800 pb-3.5">
         <div className="flex items-center gap-3">
-          <div className="p-2 sm:p-2.5 rounded-2xl bg-gold-500/10 border border-gold-500/20 text-gold-500 shrink-0">
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-theme-primary/10 border border-theme-primary/20 text-theme-primary shrink-0">
             <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white capitalize">
-              {monthNames[month]} <span className="text-gold-500">{year}</span>
+              {monthNames[month]} <span className="text-theme-primary">{year}</span>
             </h2>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
               Visão Mensal Notion-Style • Selecione um dia para ver compromissos
@@ -137,6 +134,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
           </div>
         </div>
 
+        {/* Botões de Ação e Navegação */}
         <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
           <button
             onClick={goToToday}
@@ -162,7 +160,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
           {canCreate && onOpenAddModal && (
             <button
               onClick={onOpenAddModal}
-              className="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-sm transition-all cursor-pointer active:scale-95"
+              className="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-theme-primary text-slate-950 hover:opacity-80 shadow-sm transition-all cursor-pointer active:scale-95"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Novo Evento</span>
@@ -172,7 +170,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
       </div>
 
       {/* Dias da Semana (Header Desktop & Mobile) */}
-      <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 dark:text-gold-400/80">
+      <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 dark:text-theme-primary/80">
         {/* Desktop Header */}
         <div className="hidden md:contents">
           {daysOfWeekFull.map((day) => (
@@ -182,31 +180,31 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
           ))}
         </div>
 
-        {/* Mobile Header */}
+        {/* Mobile Header (Letras Únicas D S T Q Q S S) */}
         <div className="contents md:hidden">
-          {daysOfWeekShort.map((day, i) => (
-            <div key={i} className="py-1">
-              {day}
+          {daysOfWeekLetter.map((letter, idx) => (
+            <div key={`${letter}-${idx}`} className="py-1">
+              {letter}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Grade do Calendário */}
+      {/* Grid de Dias do Mês */}
       <div className="grid grid-cols-7 gap-1 sm:gap-2">
-        {calendarCells.map((dayNum, idx) => {
+        {calendarCells.map((dayNum, index) => {
           if (dayNum === null) {
             return (
               <div
-                key={`empty-${idx}`}
-                className="min-h-[50px] sm:min-h-[105px] rounded-2xl bg-slate-50/40 dark:bg-navy-950/20 border border-transparent"
+                key={`empty-${index}`}
+                className="min-h-[55px] sm:min-h-[105px] rounded-2xl bg-slate-100/40 dark:bg-navy-950/20 border border-transparent"
               />
             );
           }
 
           const dayEvents = getEventsForDay(dayNum);
-          const activeToday = isToday(dayNum);
           const isSelected = selectedDayNum === dayNum;
+          const activeToday = isToday(dayNum);
 
           return (
             <div
@@ -219,10 +217,10 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
               }}
               className={`min-h-[55px] sm:min-h-[105px] rounded-2xl p-1.5 sm:p-2 border transition-all duration-200 flex flex-col justify-between cursor-pointer group ${
                 isSelected
-                  ? 'ring-2 ring-gold-500 border-gold-400 dark:bg-gold-500/20'
+                  ? 'ring-2 ring-theme-primary border-theme-primary dark:bg-theme-primary/20'
                   : activeToday
-                  ? 'bg-gold-500/10 border-gold-500/40 dark:bg-gold-500/10'
-                  : 'bg-slate-50 dark:bg-navy-950/60 border-slate-200/80 dark:border-navy-800 hover:border-amber-500/40'
+                  ? 'bg-theme-primary/10 border-theme-primary/40 dark:bg-theme-primary/10'
+                  : 'bg-slate-50 dark:bg-navy-950/60 border-slate-200/80 dark:border-navy-800 hover:border-theme-primary/40'
               }`}
             >
               {/* Número do Dia */}
@@ -230,7 +228,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
                 <span
                   className={`text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-lg ${
                     activeToday
-                      ? 'bg-gold-500 text-slate-950 font-black shadow-xs'
+                      ? 'bg-theme-primary text-slate-950 font-black shadow-xs'
                       : 'text-slate-700 dark:text-slate-300'
                   }`}
                 >
@@ -238,7 +236,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
                 </span>
 
                 {dayEvents.length > 0 && (
-                  <span className="hidden sm:inline-block text-[10px] font-bold text-amber-500 dark:text-gold-400">
+                  <span className="hidden sm:inline-block text-[10px] font-bold text-theme-primary">
                     {dayEvents.length} {dayEvents.length === 1 ? 'evento' : 'evs'}
                   </span>
                 )}
@@ -257,7 +255,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
                     );
                   })}
                   {dayEvents.length > 3 && (
-                    <span className="text-[8px] font-black text-gold-400">+</span>
+                    <span className="text-[8px] font-black text-theme-primary">+</span>
                   )}
                 </div>
               )}
@@ -299,8 +297,8 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
       {selectedDayNum && (
         <div className="pt-3 border-t border-slate-200 dark:border-navy-800 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 dark:text-gold-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-gold-400" />
+            <span className="text-xs font-bold text-slate-700 dark:text-theme-primary flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-theme-primary" />
               <span>Agenda para {selectedDayNum} de {monthNames[month]}:</span>
             </span>
             <span className="text-[10px] font-extrabold text-slate-400">
@@ -320,7 +318,7 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
                   <div
                     key={evt.id}
                     onClick={() => onSelectEvent(evt)}
-                    className="p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-navy-950/80 border border-slate-200 dark:border-amber-500/20 hover:border-gold-500/40 transition-all cursor-pointer space-y-2 group"
+                    className="p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-navy-950/80 border border-slate-200 dark:border-theme-primary/20 hover:border-theme-primary/40 transition-all cursor-pointer space-y-2 group"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${statusInfo.badgeStyle}`}>
@@ -328,24 +326,24 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
                       </span>
                       {evt.time && (
                         <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-gold-400" />
+                          <Clock className="w-3 h-3 text-theme-primary" />
                           <span>{evt.time}</span>
                         </span>
                       )}
                     </div>
 
-                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white group-hover:text-gold-300 transition-colors">
+                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white group-hover:text-theme-primary transition-colors">
                       {evt.title}
                     </h4>
 
                     {evt.location && (
                       <p className="text-xs text-slate-500 dark:text-slate-300 flex items-center gap-1 truncate">
-                        <MapPin className="w-3.5 h-3.5 text-gold-400 shrink-0" />
+                        <MapPin className="w-3.5 h-3.5 text-theme-primary shrink-0" />
                         <span className="truncate">{evt.location}</span>
                       </p>
                     )}
 
-                    <div className="pt-1.5 border-t border-slate-200 dark:border-navy-800 flex items-center justify-between text-[11px] font-bold text-gold-400">
+                    <div className="pt-1.5 border-t border-slate-200 dark:border-navy-800 flex items-center justify-between text-[11px] font-bold text-theme-primary">
                       <span>Abrir Ficha Completa (Notion)</span>
                       <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </div>

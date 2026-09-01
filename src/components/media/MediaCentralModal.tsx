@@ -73,7 +73,7 @@ Venha louvar a Deus conosco neste programa especial! Guarde essa data e comparti
 
   const brandColors = [
     { name: 'Navy Principal', hex: '#0F223D', bgClass: 'bg-[#0F223D]' },
-    { name: 'Dourado Champagne', hex: '#D4AF37', bgClass: 'bg-[#D4AF37]' },
+    { name: 'Dourado Champagne', hex: '#D4AF37', bgClass: 'bg-theme-primary' },
     { name: 'Navy Card', hex: '#1B365D', bgClass: 'bg-[#1B365D]' },
     { name: 'Dourado Claro', hex: '#F3E0AA', bgClass: 'bg-[#F3E0AA]' },
   ];
@@ -101,7 +101,7 @@ Venha louvar a Deus conosco neste programa especial! Guarde essa data e comparti
           {/* Top Header */}
           <div className="bg-gradient-to-r from-navy-900 via-navy-950 to-navy-900 p-5 border-b border-amber-500/20 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gold-500/10 border border-gold-500/20 text-gold-400">
+              <div className="p-2.5 rounded-2xl bg-theme-primary/ border border-theme-primary/ text-theme-primary">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
@@ -127,7 +127,7 @@ Venha louvar a Deus conosco neste programa especial! Guarde essa data e comparti
             {/* Seção 1: Gerador de Copys / Legendas para Instagram */}
             <div className="bg-navy-950/70 p-5 rounded-2xl border border-amber-500/20 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                   <FileText className="w-4 h-4" />
                   Gerador de Copys &amp; Legendas (Instagram)
                 </span>
@@ -141,7 +141,7 @@ Venha louvar a Deus conosco neste programa especial! Guarde essa data e comparti
                 <select
                   value={selectedEventId}
                   onChange={(e) => setSelectedEventId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-900 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-gold-500/50 font-semibold"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-900 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/50 font-semibold"
                 >
                   {events.map((evt) => (
                     <option key={evt.id} value={evt.id}>
@@ -164,7 +164,7 @@ Venha louvar a Deus conosco neste programa especial! Guarde essa data e comparti
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleCopyCopyText}
-                  className="absolute bottom-3 right-3 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="absolute bottom-3 right-3 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-theme-primary text-slate-950 hover:brightness-110 shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   {copiedText ? (
                     <>
@@ -183,14 +183,14 @@ Venha louvar a Deus conosco neste programa especial! Guarde essa data e comparti
 
             {/* Seção 2: Kit de Imprensa (Logo & Identidade Visual) */}
             <div className="bg-navy-950/70 p-5 rounded-2xl border border-amber-500/20 space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                 <ImageIcon className="w-4 h-4" />
                 Kit de Imprensa &amp; Vetor Oficial
               </span>
 
               <div className="flex flex-col sm:flex-row items-center justify-between bg-navy-900 p-4 rounded-xl border border-navy-800 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-[#0F223D] border border-gold-500/20">
+                  <div className="p-2.5 rounded-xl bg-[#0F223D] border border-theme-primary/">
                     <Image
                       src="/logo-ellos.svg"
                       alt="Ellos Logo"
@@ -210,9 +210,9 @@ Venha louvar a Deus conosco neste programa especial! Guarde essa data e comparti
                 <a
                   href="/logo-ellos.svg"
                   download="logo-ellos.svg"
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-navy-800 hover:bg-navy-700 text-gold-300 border border-gold-500/30 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-navy-800 hover:bg-navy-700 text-theme-primary border border-theme-primary/ transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
-                  <Download className="w-4 h-4 text-gold-400" />
+                  <Download className="w-4 h-4 text-theme-primary" />
                   <span>Download SVG</span>
                 </a>
               </div>
@@ -220,7 +220,7 @@ Venha louvar a Deus conosco neste programa especial! Guarde essa data e comparti
 
             {/* Seção 3: Paleta de Cores Oficiais */}
             <div className="bg-navy-950/70 p-5 rounded-2xl border border-amber-500/20 space-y-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-theme-primary flex items-center gap-1.5">
                 <Palette className="w-4 h-4" />
                 Paleta de Cores do Ellos Hub
               </span>
@@ -230,7 +230,7 @@ Venha louvar a Deus conosco neste programa especial! Guarde essa data e comparti
                   <button
                     key={col.hex}
                     onClick={() => handleCopyColorHex(col.hex)}
-                    className="p-3 rounded-xl bg-navy-900 border border-navy-800 text-left hover:border-gold-500/40 transition-all cursor-pointer group"
+                    className="p-3 rounded-xl bg-navy-900 border border-navy-800 text-left hover:border-theme-primary/40 transition-all cursor-pointer group"
                   >
                     <div className={`h-8 w-full rounded-lg ${col.bgClass} border border-white/10 mb-2 shadow-xs`} />
                     <span className="text-[11px] font-bold text-white block truncate">

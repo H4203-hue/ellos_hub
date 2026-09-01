@@ -52,22 +52,36 @@ export const DevMemberManagementModal: React.FC<DevMemberManagementModalProps> =
       role: newRole,
     };
 
-    const updated = [newMember, ...membersList];
-    onUpdateMembersList(updated);
-
     if (supabase) {
-      await supabase.from('profiles').upsert({
-        id: newMember.id,
-        email: newMember.email,
-        name: newMember.name,
-        voice: newMember.voice,
-        role: newMember.role,
-      });
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: newMember.id,
+          email: newMember.email,
+          name: newMember.name,
+          voice: newMember.voice,
+          role: newRole,
+        })
+        .select()
+        .single();
+
+      // SE DEU ERRO, TRAVA TUDO E AVISA!
+      if (error) {
+        console.error("❌ ERRO EXPLOSIVO NO PERFIL:", error);
+        alert(`Erro do banco: ${error.message}\nDetalhes: ${error.details || error.hint}`);
+        setIsSubmitting(false);
+        return; // IMPEDE A CRIAÇÃO DE FANTASMA
+      }
+
+      // SÓ ATUALIZA A TELA SE CHEGOU AQUI (SUCESSO)
+      const updated = [data || newMember, ...membersList];
+      onUpdateMembersList(updated);
+
+      showToast(`✨ Membro ${nameFormatted} cadastrado como ${newRole}!`);
+      setNewEmail('');
+      setNewName('');
     }
 
-    showToast(`✨ Membro ${nameFormatted} cadastrado como ${newRole}!`);
-    setNewEmail('');
-    setNewName('');
     setIsSubmitting(false);
   };
 
@@ -83,12 +97,12 @@ export const DevMemberManagementModal: React.FC<DevMemberManagementModalProps> =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#1B365D] border border-slate-200 dark:border-gold-500/30 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 relative max-h-[85vh] flex flex-col justify-between overflow-hidden">
+      <div className="bg-white dark:bg-[#1B365D] border border-slate-200 dark:border-theme-primary/ rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 relative max-h-[85vh] flex flex-col justify-between overflow-hidden">
         {/* Header */}
         <div className="flex items-start justify-between shrink-0">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-800 dark:text-gold-300 border border-amber-500/20">
-              <ShieldCheck className="w-3.5 h-3.5 text-gold-500" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-800 dark:text-theme-primary border border-amber-500/20">
+              <ShieldCheck className="w-3.5 h-3.5 text-theme-primary" />
               <span>Painel do Desenvolvedor (DEV Mode)</span>
             </div>
             <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
@@ -110,7 +124,7 @@ export const DevMemberManagementModal: React.FC<DevMemberManagementModalProps> =
         <div className="space-y-5 overflow-y-auto no-scrollbar flex-1 pr-1">
           {/* Add New Member Form */}
           <form onSubmit={handleAddMember} className="bg-slate-50 dark:bg-navy-950/60 p-4 rounded-2xl border border-slate-200 dark:border-amber-500/20 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gold-400 flex items-center gap-1.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-theme-primary flex items-center gap-1.5">
               <UserPlus className="w-4 h-4" />
               Cadastrar Novo Integrante
             </h3>
@@ -179,7 +193,7 @@ export const DevMemberManagementModal: React.FC<DevMemberManagementModalProps> =
             <button
               type="submit"
               disabled={isSubmitting || !newEmail.trim() || !newName.trim()}
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 hover:brightness-110 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-extrabold bg-theme-primary text-slate-950 hover:brightness-110 shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
               Salvar Novo Integrante
             </button>
@@ -187,7 +201,7 @@ export const DevMemberManagementModal: React.FC<DevMemberManagementModalProps> =
 
           {/* Members List with Role Switcher */}
           <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gold-400 flex items-center gap-1.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-theme-primary flex items-center gap-1.5">
               <Shield className="w-4 h-4" />
               Integrantes Cadastrados ({membersList.length})
             </h3>

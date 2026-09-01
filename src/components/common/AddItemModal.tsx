@@ -333,23 +333,23 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-sm animate-in fade-in duration-200 no-scrollbar"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200 no-scrollbar"
     >
-      <div className="bg-white dark:bg-[#1B365D] border border-slate-200 dark:border-amber-500/20 rounded-2xl max-w-xl w-[92vw] sm:w-full shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[580px] overflow-hidden transition-all no-scrollbar">
+      <div className="bg-[#1F2937] border border-gray-700 rounded-2xl max-w-xl w-[92vw] sm:w-full shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[580px] overflow-hidden transition-all no-scrollbar text-white">
         {/* Header - Fixed */}
-        <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-slate-100 dark:border-navy-800/60 shrink-0 bg-white/50 dark:bg-[#1B365D]/50">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-gray-700 shrink-0 bg-[#1F2937]">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
             {mode === 'edit' ? (
-              <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-gold-500" />
+              <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-theme-primary" />
             ) : (
-              <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-navy-700 dark:text-gold-400" />
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-theme-primary" />
             )}
             {getHeaderTitle()}
           </h2>
           <button
             onClick={onClose}
             type="button"
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 sm:p-1.5 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-navy-800/60 cursor-pointer"
+            className="text-gray-400 hover:text-white p-1 sm:p-1.5 rounded-xl transition-colors hover:bg-gray-800 cursor-pointer"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -462,7 +462,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         placeholder="Ex: IASD Central Itapecerica"
                         value={eventTitle}
                         onChange={(e) => setEventTitle(e.target.value)}
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                        className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                       />
                     </div>
 
@@ -477,7 +477,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           placeholder="Ex: Culto, Escola Sabatina"
                           value={eventCategory}
                           onChange={(e) => setEventCategory(e.target.value)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                         />
                       </div>
                       <div>
@@ -488,7 +488,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         <select
                           value={eventStatus}
                           onChange={(e) => setEventStatus(e.target.value as any)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs cursor-pointer"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all cursor-pointer"
                         >
                           <option value="PROPOSAL">Em Votação / Análise</option>
                           <option value="CONFIRMED">Confirmado</option>
@@ -508,7 +508,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           placeholder="Ex: 2026-11-15 ou A definir"
                           value={eventDate}
                           onChange={(e) => setEventDate(e.target.value)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                         />
                       </div>
                       <div>
@@ -521,7 +521,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           placeholder="Ex: 10:00"
                           value={eventTime}
                           onChange={(e) => setEventTime(e.target.value)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                         />
                       </div>
                     </div>
@@ -536,17 +536,17 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           type="date"
                           value={eventVotingDeadline}
                           onChange={(e) => setEventVotingDeadline(e.target.value)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all"
                         />
                       </div>
 
                       <div className="flex items-end">
-                        <label className="inline-flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 w-full text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer">
+                        <label className="inline-flex items-center gap-2 p-2.5 rounded-lg border border-gray-700 bg-[#111827] w-full text-xs font-medium text-gray-300 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={eventIsVotingClosed}
                             onChange={(e) => setEventIsVotingClosed(e.target.checked)}
-                            className="rounded border-slate-400 text-gold-500 focus:ring-gold-500"
+                            className="rounded border-gray-600 text-theme-primary focus:ring-theme-primary"
                           />
                           <span>Encerrar Votações (Regência)</span>
                         </label>
@@ -568,7 +568,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         placeholder="Ex: Igreja Central - Av. Principal, 100"
                         value={eventLocation}
                         onChange={(e) => setEventLocation(e.target.value)}
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                        className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                       />
                     </div>
 
@@ -583,7 +583,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           placeholder="Ex: Pr. João"
                           value={eventContactName}
                           onChange={(e) => setEventContactName(e.target.value)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                         />
                       </div>
                       <div>
@@ -596,7 +596,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           placeholder="Ex: 11996554353"
                           value={eventContactPhone}
                           onChange={(e) => setEventContactPhone(e.target.value)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                         />
                       </div>
                     </div>
@@ -617,7 +617,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           placeholder="Ex: 👔 Social Dourado/Azul"
                           value={eventDressCode}
                           onChange={(e) => setEventDressCode(e.target.value)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                         />
                       </div>
                       <div>
@@ -631,7 +631,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           max="16"
                           value={eventMicrophonesCount}
                           onChange={(e) => setEventMicrophonesCount(Number(e.target.value))}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all"
                         />
                       </div>
                     </div>
@@ -646,7 +646,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         placeholder={"08:30 - Passagem de Som\n09:15 - Oração\n10:00 - Apresentação"}
                         value={eventScheduleInput}
                         onChange={(e) => setEventScheduleInput(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs font-mono resize-none"
+                        className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs font-mono resize-none focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                       />
                     </div>
 
@@ -660,7 +660,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         placeholder="Ex: Alinhamento técnico com sonoplastia."
                         value={eventNotes}
                         onChange={(e) => setEventNotes(e.target.value)}
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs resize-none"
+                        className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm resize-none focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                       />
                     </div>
                   </div>
@@ -711,7 +711,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         placeholder="Ex: Música Especial CTJ"
                         value={songTitle}
                         onChange={(e) => setSongTitle(e.target.value)}
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                        className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                       />
                     </div>
 
@@ -726,7 +726,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           placeholder="Ex: Ellos Vocal"
                           value={songArtist}
                           onChange={(e) => setSongArtist(e.target.value)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                         />
                       </div>
                       <div>
@@ -739,7 +739,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           placeholder="Ex: F, G, Dm"
                           value={songKey}
                           onChange={(e) => setSongKey(e.target.value)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                         />
                       </div>
                     </div>
@@ -755,7 +755,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           placeholder="Ex: 90"
                           value={songBpm}
                           onChange={(e) => setSongBpm(e.target.value ? Number(e.target.value) : '')}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                         />
                       </div>
                       <div>
@@ -766,7 +766,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         <select
                           value={songStatus}
                           onChange={(e) => setSongStatus(e.target.value as any)}
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs cursor-pointer"
+                          className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all cursor-pointer"
                         >
                           <option value="REHEARSING">Em Ensaio</option>
                           <option value="READY">Pronta para Apresentar</option>
@@ -785,7 +785,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         placeholder="Ex: Ellos, Autoral, Especial"
                         value={songTags}
                         onChange={(e) => setSongTags(e.target.value)}
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                        className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                       />
                     </div>
                   </div>
@@ -804,7 +804,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         placeholder="https://drive.google.com/..."
                         value={songDriveUrl}
                         onChange={(e) => setSongDriveUrl(e.target.value)}
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                        className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                       />
                     </div>
 
@@ -818,7 +818,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         placeholder="https://drive.google.com/..."
                         value={songSheetUrl}
                         onChange={(e) => setSongSheetUrl(e.target.value)}
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                        className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                       />
                     </div>
 
@@ -898,7 +898,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     placeholder="Ex: Alinhar detalhes da volta dos ensaios"
                     value={taskDescription}
                     onChange={(e) => setTaskDescription(e.target.value)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                    className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                   />
                 </div>
 
@@ -910,7 +910,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                   <select
                     value={taskCategory}
                     onChange={(e) => setTaskCategory(e.target.value as any)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs cursor-pointer"
+                    className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all cursor-pointer"
                   >
                     <option value="DIVULGACAO">Divulgação</option>
                     <option value="LOGISTICA">Logística</option>
@@ -929,7 +929,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     placeholder="Ex: Regência, Mídia"
                     value={taskAssignedTo}
                     onChange={(e) => setTaskAssignedTo(e.target.value)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                    className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                   />
                 </div>
 
@@ -943,7 +943,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     placeholder="Ex: 2026-12-01 ou Próximo ensaio"
                     value={taskDueDate}
                     onChange={(e) => setTaskDueDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-950/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all shadow-xs"
+                    className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -951,17 +951,17 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           </div>
 
           {/* Sticky Action Footer */}
-          <div className="p-3 sm:p-3.5 border-t border-slate-100 dark:border-navy-800/60 flex items-center justify-end gap-2 shrink-0 bg-slate-50/50 dark:bg-navy-950/40">
+          <div className="p-3 sm:p-4 border-t border-gray-700 flex items-center justify-end gap-2 shrink-0 bg-[#1F2937]">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-medium text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 text-xs font-extrabold text-slate-950 bg-gradient-to-r from-[#D4AF37] to-[#B89028] hover:brightness-110 rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
+              className="bg-theme-primary text-slate-950 font-bold hover:opacity-80 transition-colors rounded-lg px-4 py-2 text-xs cursor-pointer shadow-xs"
             >
               {mode === 'edit' ? 'Salvar Alterações' : 'Salvar Item'}
             </button>

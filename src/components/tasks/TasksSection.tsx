@@ -111,7 +111,7 @@ export const TasksSection: React.FC<TasksSectionProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <ListTodo className="w-5 h-5 text-navy-700 dark:text-gold-400" />
+              <ListTodo className="w-5 h-5 text-navy-700 dark:text-theme-primary" />
               Tarefas Administrativas & Backlog
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-300 mt-1">
@@ -137,7 +137,7 @@ export const TasksSection: React.FC<TasksSectionProps> = ({
             {onOpenAddModal && (
               <button
                 onClick={() => onOpenAddModal('task')}
-                className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-[#D4AF37] to-[#B89028] hover:brightness-110 rounded-xl shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
+                className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-slate-950 bg-theme-primary hover:brightness-110 rounded-xl shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Nova Tarefa</span>
@@ -153,12 +153,12 @@ export const TasksSection: React.FC<TasksSectionProps> = ({
             placeholder="Adicionar nova tarefa rápida... (pressione Enter)"
             value={quickTaskText}
             onChange={(e) => setQuickTaskText(e.target.value)}
-            className="flex-1 px-4 py-2.5 text-xs rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-navy-950/60 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-600 dark:focus:ring-gold-500/50"
+            className="flex-1 px-4 py-2.5 text-xs rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-navy-950/60 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-600 dark:focus:ring-theme-primary/50"
           />
           <button
             type="submit"
             disabled={!quickTaskText.trim()}
-            className="px-4 py-2.5 rounded-xl text-xs font-bold bg-navy-900 text-white dark:bg-gold-500 dark:text-navy-950 hover:brightness-110 disabled:opacity-50 transition-all shrink-0 shadow-xs cursor-pointer"
+            className="px-4 py-2.5 rounded-xl text-xs font-bold bg-navy-900 text-white dark:bg-theme-primary dark:text-navy-950 hover:brightness-110 disabled:opacity-50 transition-all shrink-0 shadow-xs cursor-pointer"
           >
             Adicionar
           </button>
@@ -166,7 +166,7 @@ export const TasksSection: React.FC<TasksSectionProps> = ({
             <button
               type="button"
               onClick={() => onOpenAddModal('task')}
-              className="md:hidden px-3 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 shrink-0 cursor-pointer"
+              className="md:hidden px-3 py-2.5 rounded-xl text-xs font-bold bg-theme-primary text-slate-950 shrink-0 cursor-pointer"
             >
               +
             </button>
@@ -187,7 +187,7 @@ export const TasksSection: React.FC<TasksSectionProps> = ({
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-navy-800 dark:bg-gold-500 text-white dark:text-navy-950 shadow-xs'
+                    ? 'bg-navy-800 dark:bg-theme-primary text-white dark:text-navy-950 shadow-xs'
                     : 'bg-slate-100 text-slate-600 dark:bg-navy-950/60 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-800'
                 }`}
               >
@@ -216,18 +216,18 @@ export const TasksSection: React.FC<TasksSectionProps> = ({
                 className={`relative group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-[#1B365D] border rounded-2xl shadow-xs transition-all duration-200 gap-3 ${
                   task.isDone
                     ? 'border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-navy-950/30 opacity-75'
-                    : 'border-slate-200/90 dark:border-amber-500/20 hover:border-navy-600/30 dark:hover:border-gold-500/40'
+                    : 'border-slate-200/90 dark:border-amber-500/20 hover:border-navy-600/30 dark:hover:border-theme-primary/40'
                 }`}
               >
                 {/* Esquerda (Checkbox) & Centro (Descrição + Tag) */}
                 <div className="flex items-start gap-3 flex-1 min-w-0 pr-8 sm:pr-0">
                   <button
                     onClick={() => onToggleTask(task.id)}
-                    className="mt-0.5 text-slate-400 hover:text-gold-600 dark:hover:text-gold-400 transition-colors shrink-0 cursor-pointer"
+                    className="mt-0.5 text-slate-400 hover:text-theme-primary dark:hover:text-theme-primary transition-colors shrink-0 cursor-pointer"
                     title={task.isDone ? 'Marcar como não concluída' : 'Marcar como concluída'}
                   >
                     {task.isDone ? (
-                      <CheckSquare className="w-5 h-5 text-gold-600 dark:text-gold-400" />
+                      <CheckSquare className="w-5 h-5 text-theme-primary dark:text-theme-primary" />
                     ) : (
                       <Square className="w-5 h-5" />
                     )}

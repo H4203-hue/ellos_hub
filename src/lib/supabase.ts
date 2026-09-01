@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -11,9 +11,14 @@ export const isSupabaseConfigured = Boolean(
   supabaseUrl !== 'https://your-supabase-project.supabase.co'
 );
 
-// Exporta o cliente oficial do Supabase se configurado, com persistência ativa
+// createBrowserClient (não createClient puro) é essencial aqui: ele guarda
+// a sessão em cookies, não só em localStorage. src/proxy.ts e
+// src/lib/supabase/server.ts leem a sessão via cookie no servidor — com o
+// createClient antigo, o login "funcionava" no browser (localStorage) mas
+// o proxy nunca via a sessão e mandava todo mundo de volta pro /login,
+// mesmo já autenticado.
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey, {
+  ? createBrowserClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,

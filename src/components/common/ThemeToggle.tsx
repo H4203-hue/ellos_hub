@@ -14,7 +14,7 @@ export const ThemeToggle: React.FC = () => {
 
   if (!mounted) {
     return (
-      <div className="w-9 h-9 rounded-xl border border-slate-200 dark:border-gold-500/20 bg-slate-100 dark:bg-navy-950/60 flex items-center justify-center text-slate-400 shrink-0" />
+      <div className="w-9 h-9 rounded-xl border border-slate-200 dark:border-theme-primary/ bg-slate-100 dark:bg-navy-950/60 flex items-center justify-center text-slate-400 shrink-0" />
     );
   }
 
@@ -25,12 +25,12 @@ export const ThemeToggle: React.FC = () => {
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label="Alternar tema"
       title={isDark ? 'Alternar para Tema Claro' : 'Alternar para Tema Escuro'}
-      className="p-2 sm:px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-navy-950/60 dark:hover:bg-navy-800 text-navy-900 dark:text-gold-400 border border-slate-200/80 dark:border-gold-500/30 transition-all active:scale-95 shadow-sm flex items-center gap-1.5 shrink-0"
+      className="p-2 sm:px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-navy-950/60 dark:hover:bg-navy-800 text-navy-900 dark:text-theme-primary border border-slate-200/80 dark:border-theme-primary/ transition-all active:scale-95 shadow-sm flex items-center gap-1.5 shrink-0"
     >
       {isDark ? (
         <>
-          <Sun className="w-4 h-4 text-gold-400 transition-transform duration-300 hover:rotate-45" />
-          <span className="text-xs font-semibold hidden md:inline text-gold-300">Tema Claro</span>
+          <Sun className="w-4 h-4 text-theme-primary transition-transform duration-300 hover:rotate-45" />
+          <span className="text-xs font-semibold hidden md:inline text-theme-primary">Tema Claro</span>
         </>
       ) : (
         <>

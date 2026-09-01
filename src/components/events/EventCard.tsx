@@ -19,7 +19,9 @@ import {
   Copy,
   ListOrdered,
   Pencil,
-  Trash2
+  Trash2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 import { GroupMember } from '@/data/groupMembers';
@@ -56,7 +58,8 @@ export const EventCard: React.FC<EventCardProps> = ({
   eventResponses = [],
   onRefetchResponses
 }) => {
-  const [activeTab, setActiveTab] = useState<'info' | 'schedule' | 'carpool'>('info');
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState<'info' | 'schedule' | 'carpool'>('info');
   const [copiedTechSheet, setCopiedTechSheet] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -79,7 +82,6 @@ export const EventCard: React.FC<EventCardProps> = ({
     }
   };
 
-  // Carpool local state management for quick interaction
   const [localDrivers, setLocalDrivers] = useState(event.drivers || []);
   const [localPassengers, setLocalPassengers] = useState(event.passengers || []);
   const [showAddCarModal, setShowAddCarModal] = useState(false);
@@ -90,22 +92,22 @@ export const EventCard: React.FC<EventCardProps> = ({
     switch (event.status) {
       case 'CONFIRMED':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 shadow-xs">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-status-confirmed/10 text-status-confirmed border border-status-confirmed/30 shadow-xs">
+            <CheckCircle2 className="w-3.5 h-3.5 text-status-confirmed" />
             Confirmado
           </span>
         );
       case 'PROPOSAL':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-            <Vote className="w-3.5 h-3.5 text-gold-600 dark:text-gold-400" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-status-voting/10 text-status-voting border border-status-voting/30 shadow-xs">
+            <Vote className="w-3.5 h-3.5 text-status-voting" />
             Em Votação
           </span>
         );
       case 'INTERNAL':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-navy-500/10 text-navy-800 dark:text-navy-300 border border-navy-500/30 dark:border-navy-400/30">
-            <Sparkles className="w-3.5 h-3.5 text-navy-600 dark:text-navy-400" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-status-success/10 text-status-success border border-status-success/30 shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-status-success" />
             Interno / Collab
           </span>
         );
@@ -118,7 +120,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   const whatsappUrl = cleanPhone ? `https://wa.me/55${cleanPhone}` : undefined;
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr || dateStr === 'A definir') return 'Data a definir';
+    if (!dateStr || dateStr === 'A definir') return 'A definir';
     try {
       const parts = dateStr.split('-');
       if (parts.length === 3) {
@@ -137,12 +139,10 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   const hasFullQuorum = event.votesCount ? event.votesCount.yes >= event.votesCount.total : false;
 
-  // Resolve event songs from repertoire
   const eventSongsList = (event.songIds || [])
     .map((id) => songs.find((s) => s.id === id))
     .filter(Boolean) as SongItem[];
 
-  // Total carpool capacity
   const totalCarSpots = localDrivers.reduce((acc, d) => acc + d.spots, 0);
 
   const handleAddDriver = (e: React.FormEvent) => {
@@ -187,424 +187,274 @@ _Gerado via Ellos Hub_`;
     setTimeout(() => setCopiedTechSheet(false), 3000);
   };
 
-  return (
-    <div className="group relative flex flex-col justify-between bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 rounded-2xl p-5 shadow-xs hover:shadow-md hover:border-navy-600/30 dark:hover:border-gold-500/40 transition-all duration-200">
-      {/* Botões no Canto Superior Direito (Editar & Excluir) */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
-        {onEditEvent && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onEditEvent(event);
-            }}
-            title="Editar Evento"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 transition-colors cursor-pointer"
-          >
-            <Pencil className="w-4 h-4" />
-          </button>
-        )}
-        {onDeleteEvent && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDeleteEvent(event.id);
-            }}
-            title="Excluir Evento"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 transition-colors cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
-      </div>
+  const confirmedResponses = eventResponses.filter((r) => r.event_id === event.id && r.status === 'YES');
 
-      <div>
-        {/* Topo: Categoria + Status Badge */}
-        <div className="flex items-start justify-between gap-3 mb-3 pr-16">
-          <div className="flex-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-navy-700 dark:text-[#E5C378] block mb-0.5">
+  return (
+    <div className="group relative bg-white dark:bg-ellos-navy-surface border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xs hover:shadow-md hover:border-theme-primary/40 transition-all duration-200 overflow-hidden">
+      {/* Layout em linha limpo */}
+      <div className="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        {/* Esquerda: Data & Hora */}
+        <div className="shrink-0 flex md:flex-col items-center justify-center bg-ellos-light dark:bg-ellos-navy-sidebar p-3 rounded-xl min-w-[100px] border border-gray-200/60 dark:border-gray-800 text-center gap-1">
+          <Calendar className="w-4 h-4 text-theme-primary" />
+          <span className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">{formatDate(event.date)}</span>
+          {event.time && event.time !== 'A definir' && (
+            <span className="text-[11px] font-bold text-slate-500 dark:text-gray-400 flex items-center gap-1">
+              <Clock className="w-3 h-3 text-theme-primary" />
+              {event.time}
+            </span>
+          )}
+        </div>
+
+        {/* Centro: Título, Categoria, Local & Stack de Avatares */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-black uppercase tracking-wider text-theme-primary bg-theme-primary/10 px-2 py-0.5 rounded border border-theme-primary/20">
               {event.category}
             </span>
-            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white group-hover:text-navy-800 dark:group-hover:text-gold-300 transition-colors">
-              {event.title}
-            </h3>
-          </div>
-          <div className="shrink-0">
-            {getStatusBadge()}
-          </div>
-        </div>
-
-        {/* Dress Code Badge */}
-        {event.dressCode && (
-          <div className="mb-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-900 dark:bg-amber-500/15 dark:text-[#E5C378] border border-amber-500/20 dark:border-amber-500/30">
-            <Shirt className="w-3.5 h-3.5 text-gold-600 dark:text-gold-400 shrink-0" />
-            <span>Traje: {event.dressCode}</span>
-          </div>
-        )}
-
-        {/* Corpo: Detalhes do Evento */}
-        <div className="space-y-2 text-sm text-slate-600 dark:text-slate-200 mb-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
-            <span className="font-medium">{formatDate(event.date)}</span>
-            {event.time && event.time !== 'A definir' && (
-              <>
-                <span className="text-slate-300 dark:text-slate-600">•</span>
-                <Clock className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
-                <span className="font-medium">{event.time}</span>
-              </>
+            {event.dressCode && (
+              <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 flex items-center gap-1">
+                <Shirt className="w-3 h-3 text-theme-primary" /> {event.dressCode}
+              </span>
             )}
           </div>
-
+          <h3 className="text-base font-extrabold text-slate-900 dark:text-white group-hover:text-theme-primary transition-colors truncate">
+            {event.title}
+          </h3>
           {event.location && (
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
+            <p className="text-xs text-slate-600 dark:text-gray-300 flex items-center gap-1.5 mt-1">
+              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="truncate">{event.location}</span>
-            </div>
-          )}
-
-          {event.contactName && (
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-300">
-              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>Contato: {event.contactName}</span>
-            </div>
-          )}
-
-          {event.notes && (
-            <p className="text-xs text-slate-500 dark:text-slate-300/90 pt-2 border-t border-slate-100 dark:border-navy-800/80 italic">
-              &quot;{event.notes}&quot;
             </p>
           )}
-        </div>
 
-        {/* Sub-Abas do Evento: Geral, Cronograma, Caronas */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-950/60 rounded-xl mb-4 text-xs font-semibold">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveTab('info');
-            }}
-            className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
-              activeTab === 'info'
-                ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow-xs font-bold'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Geral</span>
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveTab('schedule');
-            }}
-            className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
-              activeTab === 'schedule'
-                ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow-xs font-bold'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <ListOrdered className="w-3.5 h-3.5" />
-            <span>Cronograma ({event.schedule?.length || 0})</span>
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveTab('carpool');
-            }}
-            className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
-              activeTab === 'carpool'
-                ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow-xs font-bold'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <Car className="w-3.5 h-3.5 text-gold-500" />
-            <span>Caronas ({localPassengers.length}/{totalCarSpots})</span>
-          </button>
-        </div>
-
-        {/* TAB 1: GERAL (Votação & Termômetro de Disponibilidade) */}
-        {activeTab === 'info' && (
-          <div className="space-y-3 animate-in fade-in duration-150">
-            {event.status === 'PROPOSAL' && event.votesCount && (
-              <div className="bg-slate-50 dark:bg-navy-950/60 rounded-xl p-3.5 border border-slate-200/60 dark:border-amber-500/10">
-                <div className="flex justify-between items-center text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
-                  <span className="flex items-center gap-1 text-gold-600 dark:text-gold-400">
-                    <Vote className="w-3.5 h-3.5" />
-                    Confirmação de Presença
-                  </span>
-                  <span>
-                    {event.votesCount.yes} de {event.votesCount.total} ({votePercentage}%)
-                  </span>
-                </div>
-
-                {hasFullQuorum && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 mb-2 rounded text-[11px] font-bold bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-                    Formação Completa ({event.votesCount.yes}/{event.votesCount.total})
-                  </span>
-                )}
-
-                {/* Barra de Progresso */}
-                <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden mb-2.5">
+          {/* Avatares em Stack */}
+          {confirmedResponses.length > 0 && (
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800/80">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Confirmados:</span>
+              <div className="flex -space-x-1.5 overflow-hidden">
+                {confirmedResponses.slice(0, 5).map((resp, i) => (
                   <div
-                    className="bg-gradient-to-r from-gold-500 to-gold-600 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${votePercentage}%` }}
-                  />
-                </div>
-
-                {/* Respostas registradas por integrantes */}
-                {eventResponses && eventResponses.filter((r) => r.event_id === event.id).length > 0 && (
-                  <div className="my-2 pt-2 border-t border-slate-200/60 dark:border-slate-800 space-y-1.5 text-xs">
-                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 block">
-                      Presenças Confirmadas ({eventResponses.filter((r) => r.event_id === event.id).length}):
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {eventResponses
-                        .filter((r) => r.event_id === event.id)
-                        .map((resp, idx) => (
-                          <span
-                            key={idx}
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${
-                              resp.status === 'YES'
-                                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
-                                : 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30'
-                            }`}
-                          >
-                            <span className="font-semibold">{resp.member_name}</span>
-                            <span className="opacity-75">({resp.voice})</span>
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Voting Deadline & Closed Warning */}
-                {event.votingDeadline && (
-                  <div className="mb-2 text-[11px] font-semibold text-slate-500 dark:text-gold-300 flex items-center justify-between">
-                    <span>⏰ Prazo Limite: {event.votingDeadline}</span>
-                    {event.isVotingClosed && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                        Votações Encerradas (Regência)
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Botão Votar / Confirmar */}
-                <button
-                  disabled={event.isVotingClosed || isSubmitting}
-                  onClick={handleConfirmPresence}
-                  className={`w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isSubmitting
-                      ? 'opacity-60 bg-slate-400 text-slate-900 cursor-not-allowed'
-                      : event.userVoted
-                      ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs'
-                      : 'bg-gradient-to-r from-[#D4AF37] to-[#B89028] text-slate-950 font-semibold shadow-xs hover:brightness-110'
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Sparkles className="w-4 h-4 animate-spin text-slate-900" />
-                      <span>Salvando...</span>
-                    </>
-                  ) : event.isVotingClosed ? (
-                    <span>Votação Encerrada pela Regência</span>
-                  ) : event.userVoted ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>
-                        Presença Confirmada {currentMember ? `(${currentMember.name})` : ''}! (Alterar)
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Vote className="w-4 h-4" />
-                      <span>
-                        Posso ir! {currentMember ? `(Votar como ${currentMember.name})` : '(Confirmar Presença)'}
-                      </span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 2: CRONOGRAMA DO DIA */}
-        {activeTab === 'schedule' && (
-          <div className="bg-slate-50 dark:bg-navy-950/60 rounded-xl p-3.5 border border-slate-200/60 dark:border-amber-500/10 space-y-2.5 animate-in fade-in duration-150">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-[#E5C378] flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-navy-600 dark:text-gold-400" />
-              Cronograma do Dia
-            </h4>
-
-            {event.schedule && event.schedule.length > 0 ? (
-              <div className="relative pl-3 border-l-2 border-gold-500/40 space-y-2.5 my-1">
-                {event.schedule.map((sc, idx) => (
-                  <div key={idx} className="relative text-xs">
-                    <div className="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-gold-500" />
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-mono font-bold text-navy-800 dark:text-gold-300">
-                        {sc.time}
-                      </span>
-                      <span className="text-slate-700 dark:text-slate-200 font-medium">
-                        {sc.activity}
-                      </span>
-                    </div>
+                    key={i}
+                    title={`${resp.member_name} (${resp.voice})`}
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-theme-primary text-slate-950 font-black text-[9px] ring-2 ring-white dark:ring-ellos-navy-surface"
+                  >
+                    {resp.member_name.charAt(0)}
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-xs text-slate-400 italic">Nenhum horário cadastrado para este evento.</p>
-            )}
-          </div>
-        )}
-
-        {/* TAB 3: LOGÍSTICA DE CARONAS */}
-        {activeTab === 'carpool' && (
-          <div className="bg-slate-50 dark:bg-navy-950/60 rounded-xl p-3.5 border border-slate-200/60 dark:border-amber-500/10 space-y-3 animate-in fade-in duration-150">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-[#E5C378] flex items-center gap-1.5">
-                <Car className="w-3.5 h-3.5 text-gold-500" />
-                Motoristas & Vagas
-              </h4>
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">
-                {localPassengers.length} passageiro(s) / {totalCarSpots} vaga(s)
-              </span>
+              {confirmedResponses.length > 5 && (
+                <span className="text-[10px] font-bold text-slate-400">+{confirmedResponses.length - 5}</span>
+              )}
             </div>
+          )}
+        </div>
 
-            {localDrivers.length > 0 ? (
-              <div className="space-y-1.5">
-                {localDrivers.map((drv, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white dark:bg-navy-900/80 px-2.5 py-1.5 rounded-lg border border-slate-200/60 dark:border-slate-700/50 text-xs">
-                    <span className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                      <Car className="w-3.5 h-3.5 text-navy-600 dark:text-gold-400" />
-                      {drv.name}
-                    </span>
-                    <span className="text-slate-500 dark:text-slate-300 font-medium">
-                      {drv.spots} vaga(s) disponível(is)
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 italic">Nenhum motorista cadastrado ainda.</p>
+        {/* Direita: Status, Ações & Botões */}
+        <div className="shrink-0 flex flex-col md:items-end justify-between gap-3 min-w-[160px] w-full md:w-auto">
+          <div className="flex items-center justify-between md:justify-end gap-2 w-full">
+            {getStatusBadge()}
+            {/* Botões de Ação */}
+            <div className="flex items-center gap-1">
+              {onEditEvent && (
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEditEvent(event); }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-theme-primary hover:bg-theme-primary/10 transition-colors cursor-pointer"
+                  title="Editar Evento"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
+              {onDeleteEvent && (
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteEvent(event.id); }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 transition-colors cursor-pointer"
+                  title="Excluir Evento"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full justify-end">
+            {/* Presença Button */}
+            {event.status === 'PROPOSAL' && (
+              <button
+                disabled={event.isVotingClosed || isSubmitting}
+                onClick={handleConfirmPresence}
+                className={`py-1.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+                  isSubmitting
+                    ? 'opacity-60 bg-slate-400 text-slate-900'
+                    : event.userVoted
+                    ? 'bg-status-success text-white hover:brightness-110'
+                    : 'bg-theme-primary text-slate-950 hover:opacity-80'
+                }`}
+              >
+                {event.userVoted ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Confirmado</span>
+                  </>
+                ) : (
+                  <>
+                    <Vote className="w-3.5 h-3.5" />
+                    <span>Confirmar</span>
+                  </>
+                )}
+              </button>
             )}
 
-            <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800">
-              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
-                Passageiros na Carona:
-              </span>
-              {localPassengers.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {localPassengers.map((psg, idx) => (
-                    <span key={idx} className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-200">
-                      {psg}
+            {/* Toggle Detalhes */}
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-gray-300 bg-gray-100 dark:bg-ellos-navy-sidebar hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <span>Detalhes</span>
+              {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Painel Expansível de Detalhes (Sub-abas) */}
+      {isExpanded && (
+        <div className="border-t border-gray-200 dark:border-gray-800 bg-ellos-light dark:bg-ellos-navy-sidebar p-5 space-y-4 animate-in fade-in duration-150">
+          {/* Sub-Abas do Evento */}
+          <div className="flex items-center gap-1 p-1 bg-gray-200/70 dark:bg-ellos-navy-surface rounded-xl text-xs font-semibold">
+            <button
+              onClick={() => setActiveSubTab('info')}
+              className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
+                activeSubTab === 'info'
+                  ? 'bg-white dark:bg-ellos-navy text-slate-900 dark:text-white shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Geral & Votação</span>
+            </button>
+            <button
+              onClick={() => setActiveSubTab('schedule')}
+              className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
+                activeSubTab === 'schedule'
+                  ? 'bg-white dark:bg-ellos-navy text-slate-900 dark:text-white shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <ListOrdered className="w-3.5 h-3.5" />
+              <span>Cronograma ({event.schedule?.length || 0})</span>
+            </button>
+            <button
+              onClick={() => setActiveSubTab('carpool')}
+              className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
+                activeSubTab === 'carpool'
+                  ? 'bg-white dark:bg-ellos-navy text-slate-900 dark:text-white shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Car className="w-3.5 h-3.5 text-theme-primary" />
+              <span>Caronas ({localPassengers.length}/{totalCarSpots})</span>
+            </button>
+          </div>
+
+          {/* TAB 1: GERAL & VOTAÇÃO */}
+          {activeSubTab === 'info' && (
+            <div className="space-y-3">
+              {event.contactName && (
+                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-gray-300">
+                  <User className="w-3.5 h-3.5 text-theme-primary shrink-0" />
+                  <span>Contato: {event.contactName}</span>
+                </div>
+              )}
+              {event.notes && (
+                <p className="text-xs text-slate-500 dark:text-gray-400 italic">
+                  &quot;{event.notes}&quot;
+                </p>
+              )}
+
+              {event.status === 'PROPOSAL' && event.votesCount && (
+                <div className="bg-white dark:bg-ellos-navy-surface rounded-xl p-3.5 border border-gray-200 dark:border-gray-800 space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold text-slate-800 dark:text-white">
+                    <span className="flex items-center gap-1 text-theme-primary">
+                      <Vote className="w-3.5 h-3.5" />
+                      Confirmações
                     </span>
+                    <span>{event.votesCount.yes} de {event.votesCount.total} ({votePercentage}%)</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                    <div className="bg-theme-primary h-full rounded-full transition-all duration-300" style={{ width: `${votePercentage}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Botões Utilitários */}
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  onClick={handleCopyTechSheet}
+                  className="py-2 px-3 rounded-xl text-xs font-bold bg-white dark:bg-ellos-navy-surface text-slate-800 dark:text-theme-primary border border-gray-200 dark:border-gray-800 hover:border-theme-primary transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Volume2 className="w-3.5 h-3.5 text-theme-primary" />
+                  <span>{copiedTechSheet ? 'Copiado!' : 'Copiar Ficha Técnica'}</span>
+                </button>
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="py-2 px-3 rounded-xl text-xs font-bold bg-status-success/10 text-status-success border border-status-success/30 hover:bg-status-success/20 transition-all flex items-center gap-1.5"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>WhatsApp</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: CRONOGRAMA */}
+          {activeSubTab === 'schedule' && (
+            <div className="bg-white dark:bg-ellos-navy-surface rounded-xl p-3.5 border border-gray-200 dark:border-gray-800 space-y-2">
+              {event.schedule && event.schedule.length > 0 ? (
+                <div className="relative pl-3 border-l-2 border-theme-primary space-y-2">
+                  {event.schedule.map((sc, idx) => (
+                    <div key={idx} className="relative text-xs">
+                      <div className="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-theme-primary" />
+                      <span className="font-mono font-bold text-theme-primary mr-2">{sc.time}</span>
+                      <span className="text-slate-800 dark:text-white font-medium">{sc.activity}</span>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 italic">Nenhum passageiro registrado.</p>
+                <p className="text-xs text-slate-400 italic">Nenhum horário cadastrado.</p>
               )}
             </div>
-
-            {showAddCarModal ? (
-              <form onSubmit={handleAddDriver} onClick={(e) => e.stopPropagation()} className="p-2.5 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
-                <input
-                  type="text"
-                  placeholder="Nome do Motorista"
-                  value={newDriverName}
-                  onChange={(e) => setNewDriverName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
-                  required
-                />
-                <div className="flex items-center gap-2">
-                  <label className="text-slate-600 dark:text-slate-300">Vagas:</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="8"
-                    value={newDriverSpots}
-                    onChange={(e) => setNewDriverSpots(Number(e.target.value))}
-                    className="w-16 px-2 py-1 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
-                  />
-                  <div className="ml-auto flex gap-1">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowAddCarModal(false);
-                      }}
-                      className="px-2 py-1 rounded text-slate-500 hover:text-slate-700 dark:text-slate-400 cursor-pointer"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      onClick={(e) => e.stopPropagation()}
-                      className="px-2.5 py-1 rounded bg-gold-500 text-slate-950 font-bold hover:bg-gold-400 cursor-pointer"
-                    >
-                      Salvar
-                    </button>
-                  </div>
-                </div>
-              </form>
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAddCarModal(true);
-                }}
-                className="w-full py-1.5 text-xs font-semibold text-navy-800 dark:text-gold-300 bg-white dark:bg-navy-900 border border-slate-200 dark:border-gold-500/20 hover:border-gold-500/50 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <Car className="w-3.5 h-3.5" />
-                <span>Oferecer Carona (Adicionar Carro)</span>
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Rodapé: Ficha Técnica para Sonoplastia & WhatsApp */}
-      <div className="pt-3 mt-4 border-t border-slate-100 dark:border-navy-800/80 flex flex-col gap-2">
-        <button
-          onClick={handleCopyTechSheet}
-          className={`w-full inline-flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer ${
-            copiedTechSheet
-              ? 'bg-emerald-600 text-white shadow-emerald-600/20'
-              : 'bg-slate-100 hover:bg-slate-200 dark:bg-navy-950/80 dark:hover:bg-navy-800 text-navy-900 dark:text-[#E5C378] border border-slate-200/90 dark:border-gold-500/30'
-          }`}
-        >
-          {copiedTechSheet ? (
-            <>
-              <Check className="w-4 h-4 text-white" />
-              <span>Ficha Copiada para WhatsApp! 📋</span>
-            </>
-          ) : (
-            <>
-              <Volume2 className="w-4 h-4 text-gold-500" />
-              <span>Copiar Ficha para Sonoplastia</span>
-              <Copy className="w-3.5 h-3.5 opacity-60 ml-auto" />
-            </>
           )}
-        </button>
 
-        {whatsappUrl && (
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 transition-colors"
-          >
-            <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Falar no WhatsApp ({event.contactPhone})</span>
-          </a>
-        )}
-      </div>
+          {/* TAB 3: CARONAS */}
+          {activeSubTab === 'carpool' && (
+            <div className="bg-white dark:bg-ellos-navy-surface rounded-xl p-3.5 border border-gray-200 dark:border-gray-800 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-800 dark:text-white flex items-center gap-1">
+                  <Car className="w-3.5 h-3.5 text-theme-primary" /> Motoristas
+                </span>
+                <span className="text-slate-500 dark:text-gray-400">{localPassengers.length} passageiros / {totalCarSpots} vagas</span>
+              </div>
+              {localDrivers.length > 0 ? (
+                <div className="space-y-1 text-xs">
+                  {localDrivers.map((drv, i) => (
+                    <div key={i} className="flex justify-between p-2 bg-ellos-light dark:bg-ellos-navy-sidebar rounded-lg">
+                      <span className="font-semibold text-slate-800 dark:text-white">{drv.name}</span>
+                      <span className="text-slate-500 dark:text-gray-400">{drv.spots} vaga(s)</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic">Nenhum motorista registrado.</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

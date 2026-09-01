@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { RepertoireTag } from '@/types';
+import { requireWorkspaceRole, AuthError } from '@/lib/auth/requireWorkspaceRole';
 
 // In-memory / Mock fallback store para Tags do Repertório
 let initialTags: RepertoireTag[] = [
@@ -9,12 +10,21 @@ let initialTags: RepertoireTag[] = [
   { id: 'tag-4', name: '#Acapella', colorHex: '#8B5CF6', description: 'Execução sem acompanhamento instrumental' },
 ];
 
-export async function GET() {
-  return NextResponse.json({ tags: initialTags });
+export async function GET(req: Request) {
+  try {
+    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
+    return NextResponse.json({ tags: initialTags });
+  } catch (err: unknown) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    throw err;
+  }
 }
 
 export async function POST(req: Request) {
   try {
+    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
     const body = await req.json();
     const { name, colorHex, description } = body;
 
@@ -32,6 +42,9 @@ export async function POST(req: Request) {
     initialTags = [newTag, ...initialTags];
     return NextResponse.json({ success: true, tag: newTag, tags: initialTags });
   } catch (err: unknown) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const errorMessage = err instanceof Error ? err.message : 'Erro ao criar tag';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
@@ -39,6 +52,7 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
+    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
     const body = await req.json();
     const { id, name, colorHex, description } = body;
 
@@ -59,6 +73,9 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ success: true, tags: initialTags });
   } catch (err: unknown) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar tag';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
@@ -66,6 +83,7 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
@@ -76,6 +94,9 @@ export async function DELETE(req: Request) {
     initialTags = initialTags.filter((t) => t.id !== id);
     return NextResponse.json({ success: true, tags: initialTags });
   } catch (err: unknown) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const errorMessage = err instanceof Error ? err.message : 'Erro ao excluir tag';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }

@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { requireWorkspaceRole, AuthError } from '@/lib/auth/requireWorkspaceRole';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 const getAdminClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY não está configurada no ambiente do servidor.');
+  }
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
@@ -30,8 +31,9 @@ let mockInviteStore: Array<{
 }> = [];
 
 // GET: Listar todos os convites descartáveis
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
     const supabaseAdmin = getAdminClient();
     const { data: invites, error } = await supabaseAdmin
       .from('invite_tokens')
@@ -54,7 +56,10 @@ export async function GET() {
     }));
 
     return NextResponse.json({ invites: formatted });
-  } catch {
+  } catch (err: unknown) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     return NextResponse.json({ invites: mockInviteStore });
   }
 }
@@ -62,6 +67,7 @@ export async function GET() {
 // POST: Gerar novo token descartável com validade de 48h
 export async function POST(req: Request) {
   try {
+    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
     const body = await req.json().catch(() => ({}));
     const createdBy = body.createdBy || 'Regência / ADM';
     const role = body.role || 'MEMBER';
@@ -121,6 +127,9 @@ export async function POST(req: Request) {
       invite: inviteRecord,
     });
   } catch (err: unknown) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const errorMessage = err instanceof Error ? err.message : 'Erro ao gerar token de convite';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
@@ -129,6 +138,7 @@ export async function POST(req: Request) {
 // DELETE: Revogar / Excluir token de convite
 export async function DELETE(req: Request) {
   try {
+    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     const token = searchParams.get('token');
@@ -149,6 +159,9 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true, message: 'Convite revogado com sucesso.' });
   } catch (err: unknown) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const errorMessage = err instanceof Error ? err.message : 'Erro ao revogar convite';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
