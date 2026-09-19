@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { requireWorkspaceRole, AuthError } from '@/lib/auth/requireWorkspaceRole';
 import { mapLegacyRoleToWorkspace } from '@/lib/rbac';
-import { assertTrustedOrigin } from '@/lib/security/app-url';
+import { assertTrustedOrigin, UntrustedOriginError } from '@/lib/security/app-url';
 import { isValidEmail, normalizeEmail, sanitizeShortText, validatePassword } from '@/lib/security/input-validation';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 
@@ -141,6 +141,9 @@ export async function POST(req: Request) {
       tempPassword: userPassword,
     });
   } catch (err: unknown) {
+    if (err instanceof UntrustedOriginError) {
+      return NextResponse.json({ error: 'Origem da requisição não autorizada.' }, { status: 403 });
+    }
     if (err instanceof AuthError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
@@ -295,6 +298,9 @@ export async function PUT(req: Request) {
       updated: { id: targetId, email: emailClean, name, voice, role, phone, isActive },
     });
   } catch (err: unknown) {
+    if (err instanceof UntrustedOriginError) {
+      return NextResponse.json({ error: 'Origem da requisição não autorizada.' }, { status: 403 });
+    }
     if (err instanceof AuthError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
@@ -381,6 +387,9 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true, message: 'Integrante removido deste workspace com sucesso.' });
   } catch (err: unknown) {
+    if (err instanceof UntrustedOriginError) {
+      return NextResponse.json({ error: 'Origem da requisição não autorizada.' }, { status: 403 });
+    }
     if (err instanceof AuthError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }

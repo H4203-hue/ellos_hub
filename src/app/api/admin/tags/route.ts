@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { RepertoireTag } from '@/types';
 import { requireWorkspaceRole, AuthError } from '@/lib/auth/requireWorkspaceRole';
-import { assertTrustedOrigin } from '@/lib/security/app-url';
+import { assertTrustedOrigin, UntrustedOriginError } from '@/lib/security/app-url';
 import { sanitizeShortText } from '@/lib/security/input-validation';
 
 // Armazenamento temporário até as tags serem persistidas no Supabase.
@@ -24,6 +24,10 @@ function normalizeColor(value: unknown, fallback = '#D4AF37'): string {
 }
 
 function authErrorResponse(error: unknown) {
+  if (error instanceof UntrustedOriginError) {
+    return NextResponse.json({ error: 'Origem da requisição não autorizada.' }, { status: 403 });
+  }
+
   if (error instanceof AuthError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }

@@ -1,5 +1,12 @@
 import 'server-only';
 
+export class UntrustedOriginError extends Error {
+  constructor() {
+    super('untrusted_request_origin');
+    this.name = 'UntrustedOriginError';
+  }
+}
+
 export function getTrustedAppBaseUrl(request: Request): string {
   const configuredValue = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -25,7 +32,12 @@ export function assertTrustedOrigin(request: Request): void {
   const origin = request.headers.get('origin');
   const trustedOrigin = getTrustedAppBaseUrl(request);
 
-  if (!origin || new URL(origin).origin !== trustedOrigin) {
-    throw new Error('untrusted_request_origin');
+  try {
+    if (!origin || new URL(origin).origin !== trustedOrigin) {
+      throw new UntrustedOriginError();
+    }
+  } catch (error) {
+    if (error instanceof UntrustedOriginError) throw error;
+    throw new UntrustedOriginError();
   }
 }

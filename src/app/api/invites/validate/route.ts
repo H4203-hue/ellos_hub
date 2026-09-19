@@ -7,7 +7,7 @@ import {
   sanitizeShortText,
   validatePassword,
 } from '@/lib/security/input-validation';
-import { assertTrustedOrigin } from '@/lib/security/app-url';
+import { assertTrustedOrigin, UntrustedOriginError } from '@/lib/security/app-url';
 import { hashInviteToken } from '@/lib/security/invite-token';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import type { WorkspaceRole } from '@/types/workspace';
@@ -216,6 +216,10 @@ export async function POST(req: Request) {
       user: { id: userId, name, email, voice, role: legacyRole },
     });
   } catch (err: unknown) {
+    if (err instanceof UntrustedOriginError) {
+      return NextResponse.json({ error: 'Origem da requisição não autorizada.' }, { status: 403 });
+    }
+
     console.error('invite_registration_failed', err instanceof Error ? err.name : 'unknown_error');
     return NextResponse.json({ error: 'Não foi possível processar o cadastro.' }, { status: 500 });
   }

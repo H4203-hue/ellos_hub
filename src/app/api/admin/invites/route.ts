@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 
 import { AuthError, requireWorkspaceRole } from '@/lib/auth/requireWorkspaceRole';
-import { assertTrustedOrigin, getTrustedAppBaseUrl } from '@/lib/security/app-url';
+import { assertTrustedOrigin, getTrustedAppBaseUrl, UntrustedOriginError } from '@/lib/security/app-url';
 import { sanitizeShortText } from '@/lib/security/input-validation';
 import { hashInviteToken } from '@/lib/security/invite-token';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
@@ -12,6 +12,10 @@ const INVITE_LIFETIME_MS = 48 * 60 * 60 * 1000;
 const INVITABLE_ROLES: WorkspaceRole[] = ['ADMIN', 'MEMBER'];
 
 function errorResponse(err: unknown, fallback: string) {
+  if (err instanceof UntrustedOriginError) {
+    return NextResponse.json({ error: 'Origem da requisição não autorizada.' }, { status: 403 });
+  }
+
   if (err instanceof AuthError) {
     return NextResponse.json({ error: err.message }, { status: err.status });
   }

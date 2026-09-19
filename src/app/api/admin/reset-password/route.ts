@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { AuthError, requireWorkspaceRole } from '@/lib/auth/requireWorkspaceRole';
-import { assertTrustedOrigin, getTrustedAppBaseUrl } from '@/lib/security/app-url';
+import { assertTrustedOrigin, getTrustedAppBaseUrl, UntrustedOriginError } from '@/lib/security/app-url';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 
 export async function POST(req: Request) {
@@ -48,6 +48,10 @@ export async function POST(req: Request) {
       message: 'As instruções de recuperação foram enviadas para o e-mail do integrante.',
     });
   } catch (err: unknown) {
+    if (err instanceof UntrustedOriginError) {
+      return NextResponse.json({ error: 'Origem da requisição não autorizada.' }, { status: 403 });
+    }
+
     if (err instanceof AuthError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
