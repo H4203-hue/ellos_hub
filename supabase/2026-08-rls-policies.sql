@@ -23,6 +23,37 @@
 -- `auth.uid()` por `auth.uid()::text` nas duas policies de profiles.
 -- ====================================================================
 
+-- Remove políticas legadas antes de criar o conjunto restritivo. O banco
+-- original possuía regras como "Acesso publico total", que continuariam
+-- válidas em paralelo e anulariam as políticas por workspace abaixo.
+DO $$
+DECLARE policy_record record;
+BEGIN
+  FOR policy_record IN
+    SELECT tablename, policyname
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename IN (
+        'workspaces', 'workspace_members', 'profiles', 'events', 'songs',
+        'song_voice_kits', 'tasks', 'event_responses'
+      )
+  LOOP
+    EXECUTE format(
+      'DROP POLICY IF EXISTS %I ON public.%I',
+      policy_record.policyname,
+      policy_record.tablename
+    );
+  END LOOP;
+END $$;
+
+-- Privilégios antigos também são reconstruídos explicitamente. RLS continua
+-- sendo a fronteira por linha, mas tabelas sem uso público não ficam sequer
+-- disponíveis ao papel anon.
+REVOKE ALL ON public.workspaces, public.workspace_members, public.profiles,
+  public.events, public.songs, public.song_voice_kits, public.tasks,
+  public.event_responses
+FROM anon, authenticated;
+
 
 -- =========================================================
 -- WORKSPACES — leitura pública (branding em páginas sem sessão:
