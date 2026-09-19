@@ -46,13 +46,11 @@ export default function LoginPage() {
           }
         }
 
-        const localSaved = localStorage.getItem('ellos_current_member');
-        const sessionSaved = sessionStorage.getItem('ellos_current_member');
-
-        if (localSaved || sessionSaved) {
-          router.replace('/');
-          return;
-        }
+        // O cache local contém apenas dados de apresentação e nunca comprova
+        // autenticação. Sem sessão Supabase válida, qualquer cache antigo é
+        // descartado e a tela de login permanece aberta.
+        localStorage.removeItem('ellos_current_member');
+        sessionStorage.removeItem('ellos_current_member');
       } catch (err) {
         console.warn('Erro ao verificar sessão salva:', err);
       } finally {

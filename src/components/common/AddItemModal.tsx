@@ -116,6 +116,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
     if (!isOpen) return;
 
     // Reset tabs when modal opens
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- abertura/edição precisa hidratar o formulário local
     setEventTab('basic');
     setSongTab('info');
 
@@ -335,10 +336,10 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200 no-scrollbar"
     >
-      <div className="bg-[#1F2937] border border-gray-700 rounded-2xl max-w-xl w-[92vw] sm:w-full shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[580px] overflow-hidden transition-all no-scrollbar text-white">
+      <div className="item-form-modal border rounded-2xl max-w-xl w-[92vw] sm:w-full shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[580px] overflow-hidden transition-all no-scrollbar">
         {/* Header - Fixed */}
-        <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-gray-700 shrink-0 bg-[#1F2937]">
-          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+        <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-slate-200 dark:border-gray-700 shrink-0 bg-slate-50 dark:bg-[#1F2937]">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {mode === 'edit' ? (
               <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-theme-primary" />
             ) : (
@@ -349,7 +350,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           <button
             onClick={onClose}
             type="button"
-            className="text-gray-400 hover:text-white p-1 sm:p-1.5 rounded-xl transition-colors hover:bg-gray-800 cursor-pointer"
+            className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1 sm:p-1.5 rounded-xl transition-colors hover:bg-slate-200 dark:hover:bg-gray-800 cursor-pointer"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -487,7 +488,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         </label>
                         <select
                           value={eventStatus}
-                          onChange={(e) => setEventStatus(e.target.value as any)}
+                          onChange={(e) => setEventStatus(e.target.value as 'CONFIRMED' | 'PROPOSAL' | 'INTERNAL')}
                           className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all cursor-pointer"
                         >
                           <option value="PROPOSAL">Em Votação / Análise</option>
@@ -765,7 +766,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         </label>
                         <select
                           value={songStatus}
-                          onChange={(e) => setSongStatus(e.target.value as any)}
+                          onChange={(e) => setSongStatus(e.target.value as 'READY' | 'REHEARSING' | 'TO_LEARN')}
                           className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all cursor-pointer"
                         >
                           <option value="REHEARSING">Em Ensaio</option>
@@ -909,7 +910,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                   </label>
                   <select
                     value={taskCategory}
-                    onChange={(e) => setTaskCategory(e.target.value as any)}
+                    onChange={(e) => setTaskCategory(e.target.value as 'DIVULGACAO' | 'LOGISTICA' | 'CONFRAS' | 'CONTATOS')}
                     className="w-full bg-[#111827] border border-gray-700 text-white rounded-lg px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all cursor-pointer"
                   >
                     <option value="DIVULGACAO">Divulgação</option>
@@ -951,11 +952,11 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           </div>
 
           {/* Sticky Action Footer */}
-          <div className="p-3 sm:p-4 border-t border-gray-700 flex items-center justify-end gap-2 shrink-0 bg-[#1F2937]">
+          <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-gray-700 flex items-center justify-end gap-2 shrink-0 bg-slate-50 dark:bg-[#1F2937]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-200 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
             >
               Cancelar
             </button>

@@ -7,7 +7,7 @@ import defaultTenantData from '@/data/defaultTenant.json';
 export interface WorkspaceCustomLabels {
   member?: string;
   category?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface Workspace {
@@ -149,8 +149,11 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({
 
   useEffect(() => {
     if (slug) {
-      setCurrentSlug(slug);
-      fetchWorkspace(slug);
+      const workspaceTimer = window.setTimeout(() => {
+        setCurrentSlug(slug);
+        void fetchWorkspace(slug);
+      }, 0);
+      return () => window.clearTimeout(workspaceTimer);
     }
   }, [slug, fetchWorkspace]);
 

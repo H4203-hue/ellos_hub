@@ -43,6 +43,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [invitesList, setInvitesList] = useState<InviteToken[]>([]);
   const [tags, setTags] = useState<RepertoireTag[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
 
   // Form de Cadastro de Integrante
   const [newEmail, setNewEmail] = useState('');
@@ -62,7 +63,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [editVoice, setEditVoice] = useState<VoiceType>('Soprano');
   const [editRole, setEditRole] = useState<UserRole>('MEMBER');
   const [editIsActive, setEditIsActive] = useState<boolean>(true);
-  const [editPassword, setEditPassword] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Tags Form
@@ -137,9 +137,12 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
   useEffect(() => {
     if (isOpen && workspaceId) {
-      fetchMembers();
-      fetchInvites();
-      fetchTags();
+      const loadTimer = window.setTimeout(() => {
+        void fetchMembers();
+        void fetchInvites();
+        void fetchTags();
+      }, 0);
+      return () => window.clearTimeout(loadTimer);
     }
   }, [isOpen, workspaceId]);
 
@@ -216,7 +219,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setEditVoice(member.voice);
     setEditRole(member.role);
     setEditIsActive(member.isActive !== false);
-    setEditPassword('');
   };
 
   const handleSaveEditMember = async (e: React.FormEvent) => {
@@ -238,7 +240,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           voice: editVoice,
           role: editRole,
           isActive: editIsActive,
-          password: editPassword.trim() || undefined,
         }),
       });
 
@@ -285,12 +286,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         body: JSON.stringify({ workspace_id: workspaceId, userId: member.id, email: member.email }),
       });
       const data = await res.json();
-      if (!res.ok || data.error || !data.tempPassword) {
+      if (!res.ok || data.error || !data.success) {
         toast.error(data.error || 'Erro ao redefinir senha do integrante.');
         return;
       }
-      setTempPasswordResult({ name: member.name, pass: data.tempPassword });
-      toast.success(`🔑 Senha temporária gerada para ${member.name}!`);
+      toast.success(`🔑 Link de recuperação enviado para ${member.name}.`);
     } catch {
       toast.error('Erro ao redefinir senha do integrante.');
     }
@@ -450,7 +450,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             }`}
           >
             <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span>2. Convites OTP ({invitesList.length})</span>
+            <span>2. Convites ({invitesList.length})</span>
           </button>
 
           <button
@@ -681,7 +681,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </tr>
                       ) : (
                         invitesList.map((inv) => {
-                          const isExpired = new Date(inv.expiresAt).getTime() < Date.now();
+                          const isExpired = new Date(inv.expiresAt).getTime() < renderedAt;
                           return (
                             <tr key={inv.id} className="hover:bg-gray-800/40 transition-colors">
                               <td className="p-3.5">
@@ -987,20 +987,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     🔴 Inativo / Afastado
                   </button>
                 </div>
-              </div>
-
-              <div className="space-y-1 pt-1">
-                <label className="font-semibold text-slate-300 flex items-center justify-between">
-                  <span>Nova Senha de Acesso (Opcional)</span>
-                  <span className="text-[10px] text-slate-400">Deixe em branco para manter a atual</span>
-                </label>
-                <input
-                  type="password"
-                  placeholder="•••••••• (deixe em branco se não for alterar)"
-                  value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-700 bg-[#111827] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
-                />
               </div>
 
               <div className="flex items-center gap-2 pt-3 border-t border-gray-800">

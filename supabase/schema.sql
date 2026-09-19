@@ -100,14 +100,17 @@ CREATE TABLE IF NOT EXISTS public.invite_tokens (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- DESABILITAR RLS EM DEV
-ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.events DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.event_responses DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.songs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.song_voice_kits DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.tasks DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.invite_tokens DISABLE ROW LEVEL SECURITY;
+-- SEGURANÇA: RLS nunca deve ser desativada, nem em desenvolvimento.
+-- As policies completas são instaladas por 2026-08-rls-policies.sql e
+-- 2026-09-security-hardening.sql. Sem policy, o acesso do cliente falha
+-- fechado; operações administrativas continuam possíveis pela service-role.
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.event_responses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.songs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.song_voice_kits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.invite_tokens ENABLE ROW LEVEL SECURITY;
 
 -- HABILITAR SUPABASE REALTIME
 ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;

@@ -1,168 +1,158 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import { requireWorkspaceRole, AuthError } from '@/lib/auth/requireWorkspaceRole';
+import { NextResponse } from 'next/server';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+import { AuthError, requireWorkspaceRole } from '@/lib/auth/requireWorkspaceRole';
+import { assertTrustedOrigin, getTrustedAppBaseUrl } from '@/lib/security/app-url';
+import { sanitizeShortText } from '@/lib/security/input-validation';
+import { hashInviteToken } from '@/lib/security/invite-token';
+import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import type { WorkspaceRole } from '@/types/workspace';
 
-const getAdminClient = () => {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY não está configurada no ambiente do servidor.');
+const INVITE_LIFETIME_MS = 48 * 60 * 60 * 1000;
+const INVITABLE_ROLES: WorkspaceRole[] = ['ADMIN', 'MEMBER'];
+
+function errorResponse(err: unknown, fallback: string) {
+  if (err instanceof AuthError) {
+    return NextResponse.json({ error: err.message }, { status: err.status });
   }
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-};
 
-// Memory fallback se banco não tiver retornado
-let mockInviteStore: Array<{
-  id: string;
-  token: string;
-  createdBy: string;
-  role: string;
-  expiresAt: string;
-  isUsed: boolean;
-  usedByEmail?: string;
-  createdAt: string;
-}> = [];
+  console.error(fallback, err instanceof Error ? err.message : 'unknown_error');
+  return NextResponse.json({ error: fallback }, { status: 500 });
+}
 
-// GET: Listar todos os convites descartáveis
 export async function GET(req: Request) {
   try {
-    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
-    const supabaseAdmin = getAdminClient();
+    const { workspaceId } = await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
+    const supabaseAdmin = createSupabaseAdminClient();
     const { data: invites, error } = await supabaseAdmin
       .from('invite_tokens')
-      .select('*')
+      .select('id, created_by, role, expires_at, is_used, used_by_email, created_at')
+      .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false });
 
-    if (error || !invites) {
-      return NextResponse.json({ invites: mockInviteStore });
+    if (error) {
+      throw new Error(`invite_list_failed:${error.code || 'database_error'}`);
     }
 
-    const formatted = invites.map((row) => ({
-      id: row.id,
-      token: row.token,
-      createdBy: row.created_by,
-      role: row.role,
-      expiresAt: row.expires_at,
-      isUsed: Boolean(row.is_used),
-      usedByEmail: row.used_by_email,
-      createdAt: row.created_at,
-    }));
-
-    return NextResponse.json({ invites: formatted });
+    return NextResponse.json({
+      invites: (invites || []).map((row) => ({
+        id: row.id,
+        createdBy: row.created_by,
+        role: row.role,
+        expiresAt: row.expires_at,
+        isUsed: Boolean(row.is_used),
+        usedByEmail: row.used_by_email,
+        createdAt: row.created_at,
+      })),
+    });
   } catch (err: unknown) {
-    if (err instanceof AuthError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    return NextResponse.json({ invites: mockInviteStore });
+    return errorResponse(err, 'Não foi possível listar os convites.');
   }
 }
 
-// POST: Gerar novo token descartável com validade de 48h
 export async function POST(req: Request) {
   try {
-    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
+    assertTrustedOrigin(req);
+    const { user, workspaceId, role: callerRole } = await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
     const body = await req.json().catch(() => ({}));
-    const createdBy = body.createdBy || 'Regência / ADM';
-    const role = body.role || 'MEMBER';
+    const requestedRole = body.role as WorkspaceRole;
+    const inviteRole = INVITABLE_ROLES.includes(requestedRole) ? requestedRole : 'MEMBER';
 
-    // Gerar token seguro
+    if (inviteRole === 'ADMIN' && callerRole !== 'OWNER') {
+      return NextResponse.json(
+        { error: 'Somente o proprietário pode convidar outro administrador.' },
+        { status: 403 }
+      );
+    }
+
     const token = crypto.randomBytes(16).toString('hex');
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + INVITE_LIFETIME_MS).toISOString();
+    const createdBy = sanitizeShortText(body.createdBy, 120) || user.id;
+    const supabaseAdmin = createSupabaseAdminClient();
 
-    const supabaseAdmin = getAdminClient();
+    const [{ data: workspace, error: workspaceError }, { data, error }] = await Promise.all([
+      supabaseAdmin.from('workspaces').select('slug').eq('id', workspaceId).single(),
+      supabaseAdmin
+        .from('invite_tokens')
+        .insert({
+          workspace_id: workspaceId,
+          token: hashInviteToken(token),
+          created_by: createdBy,
+          role: inviteRole,
+          is_used: false,
+          expires_at: expiresAt,
+        })
+        .select('id, created_by, role, expires_at, is_used, created_at')
+        .single(),
+    ]);
 
-    const { data, error } = await supabaseAdmin
-      .from('invite_tokens')
-      .insert([{ token, role: 'MEMBER', is_used: false }])
-      .select()
-      .single();
-
-    console.log('[INVITE CREATE]', { token, error });
-
-    const inviteRecord = data
-      ? {
-          id: data.id,
-          token: data.token,
-          createdBy: data.created_by || createdBy,
-          role: data.role || role,
-          expiresAt: data.expires_at || expiresAt,
-          isUsed: Boolean(data.is_used),
-          createdAt: data.created_at || now.toISOString(),
-        }
-      : {
-          id: `inv-${Date.now()}`,
-          token,
-          createdBy,
-          role,
-          expiresAt,
-          isUsed: false,
-          createdAt: now.toISOString(),
-        };
+    if (workspaceError || !workspace?.slug) {
+      if (data?.id) {
+        await supabaseAdmin.from('invite_tokens').delete().eq('id', data.id).eq('workspace_id', workspaceId);
+      }
+      throw new Error(`workspace_lookup_failed:${workspaceError?.code || 'not_found'}`);
+    }
 
     if (error || !data) {
-      mockInviteStore = [inviteRecord, ...mockInviteStore];
+      throw new Error(`invite_create_failed:${error?.code || 'database_error'}`);
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-    let baseUrl = appUrl;
-    if (!baseUrl) {
-      const host = req.headers.get('host') || 'localhost:3000';
-      const protocol = req.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
-      baseUrl = `${protocol}://${host}`;
+    let baseUrl: string;
+    try {
+      baseUrl = getTrustedAppBaseUrl(req);
+    } catch (error) {
+      await supabaseAdmin.from('invite_tokens').delete().eq('id', data.id).eq('workspace_id', workspaceId);
+      throw error;
     }
-    const inviteUrl = `${baseUrl}/entrar-no-grupo?token=${token}`;
+
+    const inviteUrl = `${baseUrl}/${encodeURIComponent(workspace.slug)}/entrar-no-grupo?token=${token}`;
 
     return NextResponse.json({
       success: true,
-      token,
       inviteUrl,
-      invite: inviteRecord,
+      invite: {
+        id: data.id,
+        createdBy: data.created_by,
+        role: data.role,
+        expiresAt: data.expires_at,
+        isUsed: Boolean(data.is_used),
+        createdAt: data.created_at,
+      },
     });
   } catch (err: unknown) {
-    if (err instanceof AuthError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    const errorMessage = err instanceof Error ? err.message : 'Erro ao gerar token de convite';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return errorResponse(err, 'Não foi possível gerar o convite.');
   }
 }
 
-// DELETE: Revogar / Excluir token de convite
 export async function DELETE(req: Request) {
   try {
-    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
+    assertTrustedOrigin(req);
+    const { workspaceId } = await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-    const token = searchParams.get('token');
 
-    if (!id && !token) {
-      return NextResponse.json({ error: 'Especifique o ID ou token do convite.' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: 'O ID do convite é obrigatório.' }, { status: 400 });
     }
 
-    const supabaseAdmin = getAdminClient();
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { data, error } = await supabaseAdmin
+      .from('invite_tokens')
+      .delete()
+      .eq('id', id)
+      .eq('workspace_id', workspaceId)
+      .select('id');
 
-    if (id) {
-      await supabaseAdmin.from('invite_tokens').delete().eq('id', id);
-      mockInviteStore = mockInviteStore.filter((i) => i.id !== id);
-    } else if (token) {
-      await supabaseAdmin.from('invite_tokens').delete().eq('token', token);
-      mockInviteStore = mockInviteStore.filter((i) => i.token !== token);
+    if (error) {
+      throw new Error(`invite_delete_failed:${error.code || 'database_error'}`);
+    }
+
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: 'Convite não encontrado neste workspace.' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, message: 'Convite revogado com sucesso.' });
   } catch (err: unknown) {
-    if (err instanceof AuthError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    const errorMessage = err instanceof Error ? err.message : 'Erro ao revogar convite';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return errorResponse(err, 'Não foi possível revogar o convite.');
   }
 }

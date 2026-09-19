@@ -9,6 +9,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 // protegida por padrão, não exposta por padrão.
 const PUBLIC_PATH_PATTERNS: RegExp[] = [
   /^\/login(\/.*)?$/,
+  /^\/atualizar-senha$/,
   /^\/api\/invites\/validate$/,
   /^\/guest(\/.*)?$/,
   /^\/convite$/,

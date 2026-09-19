@@ -320,7 +320,7 @@ _Gerado via Ellos Hub_`;
       {isExpanded && (
         <div className="border-t border-gray-200 dark:border-gray-800 bg-ellos-light dark:bg-ellos-navy-sidebar p-5 space-y-4 animate-in fade-in duration-150">
           {/* Sub-Abas do Evento */}
-          <div className="flex items-center gap-1 p-1 bg-gray-200/70 dark:bg-ellos-navy-surface rounded-xl text-xs font-semibold">
+          <div className="grid grid-cols-3 gap-1 p-1 bg-gray-200/70 dark:bg-ellos-navy-surface rounded-xl text-[10px] sm:text-xs font-semibold">
             <button
               onClick={() => setActiveSubTab('info')}
               className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
@@ -330,7 +330,8 @@ _Gerado via Ellos Hub_`;
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
-              <span>Geral & Votação</span>
+              <span className="hidden sm:inline">Geral & Votação</span>
+              <span className="sm:hidden">Geral</span>
             </button>
             <button
               onClick={() => setActiveSubTab('schedule')}
@@ -341,7 +342,8 @@ _Gerado via Ellos Hub_`;
               }`}
             >
               <ListOrdered className="w-3.5 h-3.5" />
-              <span>Cronograma ({event.schedule?.length || 0})</span>
+              <span className="hidden sm:inline">Cronograma ({event.schedule?.length || 0})</span>
+              <span className="sm:hidden">Agenda</span>
             </button>
             <button
               onClick={() => setActiveSubTab('carpool')}
@@ -352,7 +354,8 @@ _Gerado via Ellos Hub_`;
               }`}
             >
               <Car className="w-3.5 h-3.5 text-theme-primary" />
-              <span>Caronas ({localPassengers.length}/{totalCarSpots})</span>
+              <span className="hidden sm:inline">Caronas ({localPassengers.length}/{totalCarSpots})</span>
+              <span className="sm:hidden">Carona</span>
             </button>
           </div>
 

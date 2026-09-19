@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTenant } from '@/context/TenantContext';
 import { EventItem } from '@/types';
-import { mockEvents } from '@/data/mockData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { formatDateBR } from '@/lib/dateUtils';
 import { 
@@ -13,29 +12,29 @@ import {
   Clock, 
   Sparkles, 
   ArrowRight, 
-  Music, 
   MessageSquare, 
   CheckCircle2, 
   ExternalLink,
-  ChevronRight,
   Send
 } from 'lucide-react';
 
 export default function GuestDashboardPage() {
-  const { tenant } = useTenant();
-  const [events, setEvents] = useState<EventItem[]>(mockEvents);
+  const { tenant, workspace } = useTenant();
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [activeFilter, setActiveFilter] = useState<'CONFIRMED' | 'ALL'>('CONFIRMED');
 
   useEffect(() => {
     const loadEvents = async () => {
-      if (supabase && isSupabaseConfigured) {
+      if (supabase && isSupabaseConfigured && workspace?.id) {
         try {
           const { data, error } = await supabase
             .from('events')
-            .select('*')
+            .select('id, title, category, status, date, time, location')
+            .eq('workspace_id', workspace.id)
+            .eq('is_public', true)
             .order('date', { ascending: true });
 
-          if (!error && data && data.length > 0) {
+          if (!error && data) {
             setEvents(
               data.map((row) => ({
                 id: row.id,
@@ -45,18 +44,17 @@ export default function GuestDashboardPage() {
                 date: row.date || undefined,
                 time: row.time || undefined,
                 location: row.location || undefined,
-                notes: row.notes || undefined,
               }))
             );
           }
-        } catch (err) {
-          console.warn('Erro ao carregar eventos para convidados:', err);
+        } catch {
+          setEvents([]);
         }
       }
     };
 
     loadEvents();
-  }, []);
+  }, [workspace?.id]);
 
   const confirmedEvents = events.filter((e) => e.status === 'CONFIRMED' && e.date);
   const displayEvents = activeFilter === 'CONFIRMED' ? confirmedEvents : events.filter((e) => e.date);

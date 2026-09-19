@@ -70,7 +70,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
   const isHighlightTag = (tag: string) => /autoral|ellos/i.test(tag);
 
   return (
-    <div className="relative bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 rounded-2xl p-5 shadow-xs hover:shadow-md hover:border-navy-600/30 dark:hover:border-theme-primary/40 transition-all duration-200 flex flex-col md:flex-row md:items-start justify-between gap-5">
+    <div className="relative bg-white dark:bg-[#1B365D] border border-slate-200/90 dark:border-amber-500/20 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-navy-600/30 dark:hover:border-theme-primary/40 transition-all duration-200 flex flex-col md:flex-row md:items-start justify-between gap-5">
       {/* Botões de Editar & Excluir no Canto Superior Direito */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
         {onEditSong && (
@@ -81,7 +81,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
               onEditSong(song);
             }}
             title="Editar Música"
-            className="p-2 rounded-lg bg-slate-800/60 hover:bg-amber-400/20 text-slate-400 hover:text-amber-400 border border-slate-700/50 hover:border-amber-400/40 transition-all cursor-pointer shadow-xs"
+            className="p-2 rounded-lg bg-white/90 hover:bg-amber-400/15 text-slate-500 hover:text-amber-600 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:text-amber-400 border border-slate-200 dark:border-slate-700/50 hover:border-amber-400/40 transition-all cursor-pointer shadow-xs"
           >
             <Pencil className="w-4 h-4" />
           </button>
@@ -94,7 +94,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
               onDeleteSong(song.id);
             }}
             title="Excluir Música"
-            className="p-2 rounded-lg bg-slate-800/60 hover:bg-rose-400/20 text-slate-400 hover:text-rose-400 border border-slate-700/50 hover:border-rose-400/40 transition-all cursor-pointer shadow-xs"
+            className="p-2 rounded-lg bg-white/90 hover:bg-rose-400/15 text-slate-500 hover:text-rose-600 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700/50 hover:border-rose-400/40 transition-all cursor-pointer shadow-xs"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -102,7 +102,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
       </div>
 
       {/* Coluna Esquerda: Informações da Música, Badges & Tags */}
-      <div className="flex-1 space-y-3 pr-2 sm:pr-4">
+      <div className="flex-1 min-w-0 space-y-3 pr-20 sm:pr-24 md:pr-4">
         <div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Music className="w-5 h-5 text-navy-700 dark:text-theme-primary shrink-0" />
@@ -151,7 +151,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({ song, onEditSong, on
       {/* Coluna Direita: Links de Ação (Drive/Cifra) & Kits de Voz por Naipe */}
       {/* pr-24: os botões de Editar/Excluir ficam absolutos no canto (top-4 right-4),
           essa folga é a reserva pra eles não colidirem com "Pasta Drive"/"Cifra / PDF" */}
-      <div className="flex flex-col gap-3 min-w-[260px] shrink-0 pr-24">
+      <div className="flex flex-col gap-3 w-full md:w-auto md:min-w-[260px] shrink-0 pt-8 md:pt-0 md:pr-24">
         {/* Botoes de Ação Principais */}
         <div className="flex items-center gap-2">
           {song.generalDriveFolderUrl && (

@@ -124,7 +124,10 @@ export const DevPanelModal: React.FC<DevPanelModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      fetchDbTelemetry();
+      const telemetryTimer = window.setTimeout(() => {
+        void fetchDbTelemetry();
+      }, 0);
+      return () => window.clearTimeout(telemetryTimer);
     }
   }, [isOpen]);
 

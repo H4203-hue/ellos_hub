@@ -1,103 +1,136 @@
 import { NextResponse } from 'next/server';
-import { RepertoireTag } from '@/types';
+import type { RepertoireTag } from '@/types';
 import { requireWorkspaceRole, AuthError } from '@/lib/auth/requireWorkspaceRole';
+import { assertTrustedOrigin } from '@/lib/security/app-url';
+import { sanitizeShortText } from '@/lib/security/input-validation';
 
-// In-memory / Mock fallback store para Tags do Repertório
-let initialTags: RepertoireTag[] = [
-  { id: 'tag-1', name: '#EllosAutoral', colorHex: '#D4AF37', description: 'Músicas de composição própria do Ellos' },
-  { id: 'tag-2', name: '#EspecialCTJ', colorHex: '#3B82F6', description: 'Músicas preparadas para eventos do CTJ' },
-  { id: 'tag-3', name: '#MaisVocal', colorHex: '#10B981', description: 'Arranjos do grupo Mais Vocal' },
-  { id: 'tag-4', name: '#Acapella', colorHex: '#8B5CF6', description: 'Execução sem acompanhamento instrumental' },
-];
+// Armazenamento temporário até as tags serem persistidas no Supabase.
+// A chave por workspace evita que dados de organizações diferentes se misturem.
+const tagsByWorkspace = new Map<string, RepertoireTag[]>();
+const COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 
-export async function GET(req: Request) {
+function getWorkspaceTags(workspaceId: string): RepertoireTag[] {
+  return tagsByWorkspace.get(workspaceId) ?? [];
+}
+
+function normalizeName(value: unknown): string {
+  const name = sanitizeShortText(value, 60).replace(/^#+/, '');
+  return name ? `#${name}` : '';
+}
+
+function normalizeColor(value: unknown, fallback = '#D4AF37'): string {
+  const color = sanitizeShortText(value, 7);
+  return COLOR_PATTERN.test(color) ? color.toUpperCase() : fallback;
+}
+
+function authErrorResponse(error: unknown) {
+  if (error instanceof AuthError) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
+  }
+
+  return NextResponse.json({ error: 'Não foi possível concluir a operação.' }, { status: 500 });
+}
+
+export async function GET(request: Request) {
   try {
-    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
-    return NextResponse.json({ tags: initialTags });
-  } catch (err: unknown) {
-    if (err instanceof AuthError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    throw err;
+    const { workspaceId } = await requireWorkspaceRole(request, ['OWNER', 'ADMIN']);
+    return NextResponse.json({ tags: getWorkspaceTags(workspaceId) });
+  } catch (error: unknown) {
+    return authErrorResponse(error);
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
-    const body = await req.json();
-    const { name, colorHex, description } = body;
+    assertTrustedOrigin(request);
+    const { workspaceId } = await requireWorkspaceRole(request, ['OWNER', 'ADMIN']);
+    const body = await request.json();
+    const name = normalizeName(body.name);
 
     if (!name) {
       return NextResponse.json({ error: 'Nome da tag é obrigatório.' }, { status: 400 });
     }
 
+    const currentTags = getWorkspaceTags(workspaceId);
+    if (currentTags.some((tag) => tag.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'))) {
+      return NextResponse.json({ error: 'Já existe uma tag com esse nome.' }, { status: 409 });
+    }
+
     const newTag: RepertoireTag = {
-      id: `tag-${Date.now()}`,
-      name: name.startsWith('#') ? name : `#${name}`,
-      colorHex: colorHex || '#D4AF37',
-      description: description || '',
+      id: crypto.randomUUID(),
+      name,
+      colorHex: normalizeColor(body.colorHex),
+      description: sanitizeShortText(body.description, 240),
     };
+    const tags = [newTag, ...currentTags];
+    tagsByWorkspace.set(workspaceId, tags);
 
-    initialTags = [newTag, ...initialTags];
-    return NextResponse.json({ success: true, tag: newTag, tags: initialTags });
-  } catch (err: unknown) {
-    if (err instanceof AuthError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    const errorMessage = err instanceof Error ? err.message : 'Erro ao criar tag';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json({ success: true, tag: newTag, tags }, { status: 201 });
+  } catch (error: unknown) {
+    return authErrorResponse(error);
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(request: Request) {
   try {
-    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
-    const body = await req.json();
-    const { id, name, colorHex, description } = body;
+    assertTrustedOrigin(request);
+    const { workspaceId } = await requireWorkspaceRole(request, ['OWNER', 'ADMIN']);
+    const body = await request.json();
+    const id = sanitizeShortText(body.id, 100);
+    const currentTags = getWorkspaceTags(workspaceId);
+    const existingTag = currentTags.find((tag) => tag.id === id);
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID da tag é obrigatório.' }, { status: 400 });
+    if (!id || !existingTag) {
+      return NextResponse.json({ error: 'Tag não encontrada.' }, { status: 404 });
     }
 
-    initialTags = initialTags.map((t) =>
-      t.id === id
+    const name = body.name === undefined ? existingTag.name : normalizeName(body.name);
+    if (!name) {
+      return NextResponse.json({ error: 'Nome da tag é obrigatório.' }, { status: 400 });
+    }
+
+    if (
+      currentTags.some(
+        (tag) => tag.id !== id && tag.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR')
+      )
+    ) {
+      return NextResponse.json({ error: 'Já existe uma tag com esse nome.' }, { status: 409 });
+    }
+
+    const tags = currentTags.map((tag) =>
+      tag.id === id
         ? {
-            ...t,
-            name: name ? (name.startsWith('#') ? name : `#${name}`) : t.name,
-            colorHex: colorHex || t.colorHex,
-            description: description !== undefined ? description : t.description,
+            ...tag,
+            name,
+            colorHex: body.colorHex === undefined ? tag.colorHex : normalizeColor(body.colorHex, tag.colorHex),
+            description:
+              body.description === undefined ? tag.description : sanitizeShortText(body.description, 240),
           }
-        : t
+        : tag
     );
+    tagsByWorkspace.set(workspaceId, tags);
 
-    return NextResponse.json({ success: true, tags: initialTags });
-  } catch (err: unknown) {
-    if (err instanceof AuthError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar tag';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json({ success: true, tags });
+  } catch (error: unknown) {
+    return authErrorResponse(error);
   }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(request: Request) {
   try {
-    await requireWorkspaceRole(req, ['OWNER', 'ADMIN']);
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
+    assertTrustedOrigin(request);
+    const { workspaceId } = await requireWorkspaceRole(request, ['OWNER', 'ADMIN']);
+    const id = sanitizeShortText(new URL(request.url).searchParams.get('id'), 100);
+    const currentTags = getWorkspaceTags(workspaceId);
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID da tag é obrigatório para exclusão.' }, { status: 400 });
+    if (!id || !currentTags.some((tag) => tag.id === id)) {
+      return NextResponse.json({ error: 'Tag não encontrada.' }, { status: 404 });
     }
 
-    initialTags = initialTags.filter((t) => t.id !== id);
-    return NextResponse.json({ success: true, tags: initialTags });
-  } catch (err: unknown) {
-    if (err instanceof AuthError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    const errorMessage = err instanceof Error ? err.message : 'Erro ao excluir tag';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    const tags = currentTags.filter((tag) => tag.id !== id);
+    tagsByWorkspace.set(workspaceId, tags);
+    return NextResponse.json({ success: true, tags });
+  } catch (error: unknown) {
+    return authErrorResponse(error);
   }
 }

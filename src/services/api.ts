@@ -1,6 +1,16 @@
 import { supabase } from '@/lib/supabase';
-import { EventItem, SongItem, TaskItem } from '@/types';
-import { GroupMember } from '@/data/groupMembers';
+import type { UserRole, VoiceType } from '@/types';
+import type { GroupMember } from '@/data/groupMembers';
+
+interface ProfileRow {
+  id: string;
+  email: string;
+  name: string;
+  voice?: VoiceType | null;
+  role: UserRole;
+  phone?: string | null;
+  is_active?: boolean | null;
+}
 
 /**
  * Busca estritamente o perfil do usuário logado na tabela `public.profiles` pelo ID da sessão ativa.
@@ -10,7 +20,7 @@ export const fetchUserProfileById = async (userId: string) => {
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, email, name, voice, role, phone, is_active')
     .eq('id', userId)
     .single();
 
@@ -20,21 +30,19 @@ export const fetchUserProfileById = async (userId: string) => {
 /**
  * Mapeia o registro da tabela public.profiles para o tipo GroupMember.
  */
-export const mapProfileToGroupMember = (profile: any): GroupMember => ({
+export const mapProfileToGroupMember = (profile: ProfileRow): GroupMember => ({
   id: profile.id,
   email: profile.email,
   name: profile.name,
   voice: profile.voice || 'Geral',
   role: profile.role,
-  phone: profile.phone,
+  phone: profile.phone || undefined,
   isActive: profile.is_active !== false,
 });
 
 // Serviços de deleção
 export const deleteEventFromSupabase = async (id: string) => {
-  console.log(`🚀 [DEBUG EXCLUSÃO API] ID recebido: "${id}" | Tamanho do texto: ${id?.length}`);
   if (!id) {
-    console.error("❌ ERRO CRÍTICO: Tentativa de excluir com ID vazio!");
     return { data: null, error: new Error('ID vazio') };
   }
   if (!supabase) return { data: null, error: new Error('Supabase não configurado') };
@@ -42,9 +50,7 @@ export const deleteEventFromSupabase = async (id: string) => {
 };
 
 export const deleteSongFromSupabase = async (id: string) => {
-  console.log(`🚀 [DEBUG EXCLUSÃO API] ID recebido: "${id}" | Tamanho do texto: ${id?.length}`);
   if (!id) {
-    console.error("❌ ERRO CRÍTICO: Tentativa de excluir com ID vazio!");
     return { data: null, error: new Error('ID vazio') };
   }
   if (!supabase) return { data: null, error: new Error('Supabase não configurado') };
@@ -52,9 +58,7 @@ export const deleteSongFromSupabase = async (id: string) => {
 };
 
 export const deleteTaskFromSupabase = async (id: string) => {
-  console.log(`🚀 [DEBUG EXCLUSÃO API] ID recebido: "${id}" | Tamanho do texto: ${id?.length}`);
   if (!id) {
-    console.error("❌ ERRO CRÍTICO: Tentativa de excluir com ID vazio!");
     return { data: null, error: new Error('ID vazio') };
   }
   if (!supabase) return { data: null, error: new Error('Supabase não configurado') };
@@ -100,9 +104,7 @@ export const createPublicInvitation = async (payload: PublicInvitationPayload) =
       .single();
 
     if (error) {
-      console.error("❌ ERRO AO CRIAR NO BANCO:", error);
-      alert(`Erro ao salvar: ${error.message} \nDetalhes: ${error.details || error.hint || ''}`);
-      throw error;
+      throw new Error('Não foi possível enviar a solicitação.');
     }
     return [data];
   }

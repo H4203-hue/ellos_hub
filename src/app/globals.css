@@ -8,6 +8,8 @@
   --theme-primary: #D4AF37;
   --theme-primary-light: #F3E5AB;
   --theme-primary-dark: #AA8822;
+  --font-geist-sans: "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-geist-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 }
 
 .dark {
@@ -58,18 +60,25 @@
   --color-gold-800: var(--theme-primary-dark);
 }
 
-/* Remove a scrollbar vertical de toda a aplicação mantendo a rolagem ativa por mouse/touch */
+/* Mantém uma barra discreta, mas visível: esconder a rolagem prejudica a descoberta de conteúdo. */
 html, body {
-  -ms-overflow-style: none !important;  /* IE e Edge */
-  scrollbar-width: none !important;  /* Firefox */
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--theme-primary) 55%, transparent) transparent;
 }
 
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--theme-primary) 58%, transparent);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
 }
 
 body {
@@ -77,6 +86,46 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Uma única linguagem de foco evita que controles de filtros e ícones pareçam inativos. */
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 3px;
+}
+
+/* O modal de cadastro acompanha o tema; antes, o modo claro abria um formulário escuro isolado. */
+.item-form-modal {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.item-form-modal input:not([type='checkbox']),
+.item-form-modal select,
+.item-form-modal textarea {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.item-form-modal input::placeholder,
+.item-form-modal textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.dark .item-form-modal {
+  background: #1f2937;
+  border-color: #374151;
+  color: #ffffff;
+}
+
+.dark .item-form-modal input:not([type='checkbox']),
+.dark .item-form-modal select,
+.dark .item-form-modal textarea {
+  background: #111827 !important;
+  border-color: #374151 !important;
+  color: #ffffff !important;
 }
 
 /* Esconde a barra de rolagem em utilitários no-scrollbar */

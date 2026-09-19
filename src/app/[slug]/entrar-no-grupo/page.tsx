@@ -50,7 +50,8 @@ function RegistrationContent() {
       }
 
       try {
-        const res = await fetch('/api/invites/validate?token=' + token);
+        const params = new URLSearchParams({ token, workspace_slug: slug });
+        const res = await fetch(`/api/invites/validate?${params.toString()}`);
         const data = await res.json();
 
         if (data.valid) {
@@ -74,7 +75,7 @@ function RegistrationContent() {
     };
 
     validateToken();
-  }, [token]);
+  }, [slug, token]);
 
   // Submeter cadastro direto e autenticar/redirecionar
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -93,6 +94,7 @@ function RegistrationContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token,
+          workspace_slug: slug,
           name: name.trim(),
           email: emailClean,
           phone: phone.trim(),
@@ -113,14 +115,22 @@ function RegistrationContent() {
           phone: phone.trim() || undefined,
         };
 
-        localStorage.setItem('ellos_current_member', JSON.stringify(memberObj));
-
         if (supabase && isSupabaseConfigured) {
-          await supabase.auth.signInWithPassword({
+          const { error: signInError } = await supabase.auth.signInWithPassword({
             email: emailClean,
             password: password.trim(),
-          }).catch((err) => console.warn('Auto-login Supabase Auth notice:', err));
+          });
+
+          if (signInError) {
+            localStorage.removeItem('ellos_current_member');
+            sessionStorage.removeItem('ellos_current_member');
+            toast.error('Conta criada, mas não foi possível iniciar a sessão. Faça login para continuar.');
+            router.replace('/login');
+            return;
+          }
         }
+
+        localStorage.setItem('ellos_current_member', JSON.stringify(memberObj));
 
         toast.success(`✨ Bem-vindo ao ${workspace?.name || tenant.name}, ${memberObj.name}!`);
         router.replace(`/${slug || 'ellos'}`);
@@ -310,9 +320,14 @@ function RegistrationContent() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                minLength={12}
+                maxLength={128}
                 required
                 className="w-full px-3.5 py-2.5 rounded-xl border border-navy-700 bg-navy-950/80 text-slate-100 text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-theme-primary/50"
               />
+              <p className="text-[10px] leading-relaxed text-slate-400">
+                Use pelo menos 12 caracteres, incluindo maiúscula, minúscula, número e símbolo.
+              </p>
             </div>
 
             <button

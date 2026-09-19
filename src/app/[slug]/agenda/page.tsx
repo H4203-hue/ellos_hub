@@ -19,7 +19,7 @@ import { DevPanelModal } from '@/components/admin/DevPanelModal';
 import { SongListItem } from '@/components/songs/SongListItem';
 import { TasksSection } from '@/components/tasks/TasksSection';
 import { AddItemModal } from '@/components/common/AddItemModal';
-import { groupMembers, GroupMember } from '@/data/groupMembers';
+import { GroupMember } from '@/data/groupMembers';
 import { toast } from 'sonner';
 import { getFilteredNavLinks } from '@/config/navigation';
 import { formatDateBR } from '@/lib/dateUtils';
@@ -29,7 +29,6 @@ import {
   Calendar, 
   CalendarX,
   Vote, 
-  Search, 
   Filter, 
   CheckCircle2, 
   Music, 
@@ -54,7 +53,6 @@ export default function WorkspaceAgendaPage() {
   
   // Member authentication & RBAC state
   const [currentMember, setCurrentMember] = useState<GroupMember | null>(null);
-  const [membersList, setMembersList] = useState<GroupMember[]>(groupMembers);
   
   // 🛠️ DEV Vision Simulator State
   const [simulatedRole, setSimulatedRole] = useState<'DEV' | 'ADM' | 'MEDIA' | 'MEMBER'>('DEV');
@@ -119,19 +117,8 @@ export default function WorkspaceAgendaPage() {
           }
         }
 
-        const localSavedStr = localStorage.getItem('ellos_current_member');
-        const sessionSavedStr = sessionStorage.getItem('ellos_current_member');
-        const savedMemberStr = localSavedStr || sessionSavedStr;
-
-        if (savedMemberStr) {
-          const parsed: GroupMember = JSON.parse(savedMemberStr);
-          if (parsed && parsed.name && parsed.id) {
-            setCurrentMember(parsed);
-            setSimulatedRole(parsed.role as 'DEV' | 'ADM' | 'MEDIA' | 'MEMBER');
-            return;
-          }
-        }
-
+        localStorage.removeItem('ellos_current_member');
+        sessionStorage.removeItem('ellos_current_member');
         router.replace('/login');
       } catch {
         router.replace('/login');
@@ -153,26 +140,6 @@ export default function WorkspaceAgendaPage() {
   };
 
   // Supabase Loaders
-  const fetchProfilesFromSupabase = async () => {
-    if (!supabase) return;
-    try {
-      const { data, error } = await supabase.from('profiles').select('*');
-      if (!error && data && data.length > 0) {
-        setMembersList(
-          data.map((row) => ({
-            id: row.id,
-            email: row.email,
-            name: row.name,
-            voice: row.voice,
-            role: row.role,
-          }))
-        );
-      }
-    } catch (err) {
-      console.warn('Supabase profiles fetch error:', err);
-    }
-  };
-
   const fetchEventsFromSupabase = async () => {
     if (!supabase) return;
     try {
@@ -214,10 +181,17 @@ export default function WorkspaceAgendaPage() {
   };
 
   const fetchSongsFromSupabase = async () => {
-    if (!supabase) return;
+    if (!supabase || !workspace?.id) return;
     try {
-      const { data: songsData, error: songsErr } = await supabase.from('songs').select('*').order('created_at', { ascending: false });
-      const { data: kitsData } = await supabase.from('song_voice_kits').select('*');
+      const { data: songsData, error: songsErr } = await supabase
+        .from('songs')
+        .select('*')
+        .eq('workspace_id', workspace.id)
+        .order('created_at', { ascending: false });
+      const { data: kitsData } = await supabase
+        .from('song_voice_kits')
+        .select('*')
+        .eq('workspace_id', workspace.id);
       if (!songsErr && songsData) {
         setSongs(
           songsData.map((row) => {
@@ -252,9 +226,13 @@ export default function WorkspaceAgendaPage() {
   };
 
   const fetchTasksFromSupabase = async () => {
-    if (!supabase) return;
+    if (!supabase || !workspace?.id) return;
     try {
-      const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('workspace_id', workspace.id)
+        .order('created_at', { ascending: false });
       if (!error && data) {
         setTasks(
           data.map((row) => ({
@@ -273,9 +251,12 @@ export default function WorkspaceAgendaPage() {
   };
 
   const fetchResponsesFromSupabase = async () => {
-    if (!supabase) return;
+    if (!supabase || !workspace?.id) return;
     try {
-      const { data, error } = await supabase.from('event_responses').select('*');
+      const { data, error } = await supabase
+        .from('event_responses')
+        .select('event_id, member_id, member_name, voice, status, note')
+        .eq('workspace_id', workspace.id);
       if (!error && data) {
         setEventResponses(data as EventResponseRow[]);
       }
@@ -286,55 +267,51 @@ export default function WorkspaceAgendaPage() {
 
   useEffect(() => {
     const client = supabase;
-    if (!client || !isSupabaseConfigured) return;
+    if (!client || !isSupabaseConfigured || !workspace?.id) return;
 
-    fetchProfilesFromSupabase();
-    fetchEventsFromSupabase();
-    fetchSongsFromSupabase();
-    fetchTasksFromSupabase();
-    fetchResponsesFromSupabase();
+    const workspaceFilter = `workspace_id=eq.${workspace.id}`;
+
+    const initialLoadTimer = window.setTimeout(() => {
+      void fetchEventsFromSupabase();
+      void fetchSongsFromSupabase();
+      void fetchTasksFromSupabase();
+      void fetchResponsesFromSupabase();
+    }, 0);
 
     const eventsChannel = client
-      .channel('public:events')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+      .channel(`workspace:${workspace.id}:events`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events', filter: workspaceFilter }, () => {
         fetchEventsFromSupabase();
       })
       .subscribe();
 
     const songsChannel = client
-      .channel('public:songs')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'songs' }, () => {
+      .channel(`workspace:${workspace.id}:songs`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'songs', filter: workspaceFilter }, () => {
         fetchSongsFromSupabase();
       })
       .subscribe();
 
     const tasksChannel = client
-      .channel('public:tasks')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+      .channel(`workspace:${workspace.id}:tasks`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: workspaceFilter }, () => {
         fetchTasksFromSupabase();
       })
       .subscribe();
 
     const responsesChannel = client
-      .channel('public:event_responses')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'event_responses' }, () => {
+      .channel(`workspace:${workspace.id}:event_responses`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'event_responses', filter: workspaceFilter }, () => {
         fetchResponsesFromSupabase();
       })
       .subscribe();
 
-    const profilesChannel = client
-      .channel('public:profiles')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-        fetchProfilesFromSupabase();
-      })
-      .subscribe();
-
     return () => {
+      window.clearTimeout(initialLoadTimer);
       client.removeChannel(eventsChannel);
       client.removeChannel(songsChannel);
       client.removeChannel(tasksChannel);
       client.removeChannel(responsesChannel);
-      client.removeChannel(profilesChannel);
     };
   }, [workspace?.id]);
 
@@ -416,7 +393,7 @@ export default function WorkspaceAgendaPage() {
     note?: string
   ) => {
     const activeMember = memberOverride || currentMember;
-    if (!activeMember) {
+    if (!activeMember || !workspace?.id) {
       router.replace('/login');
       return;
     }
@@ -470,6 +447,7 @@ export default function WorkspaceAgendaPage() {
           voice: activeMember.voice,
           status: targetStatus,
           note: note || null,
+          workspace_id: workspace.id,
         },
         { onConflict: 'event_id,member_id' }
       );
@@ -516,6 +494,7 @@ export default function WorkspaceAgendaPage() {
     );
 
     if (supabase && updatedTask) {
+      if (!workspace?.id) return;
       await supabase.from('tasks').upsert({
         id: updatedTask.id,
         description: updatedTask.description,
@@ -523,45 +502,91 @@ export default function WorkspaceAgendaPage() {
         due_date: updatedTask.dueDate || null,
         is_done: updatedTask.isDone,
         assigned_to: updatedTask.assignedTo || null,
+        workspace_id: workspace.id,
       });
     }
   };
 
-  const handleCreateEvent = async (formData: any) => {
-    try {
-      const payloadLimpo = {
-        id: crypto.randomUUID(),
-        title: formData.title || "Evento Sem Título",
-        category: formData.category || "Geral",
-        status: formData.status || "Pendente",
-        date: formData.date || null,
-        time: formData.time || null,
-        location: formData.location || null,
-        mic_count: formData.mic_count ? parseInt(formData.mic_count, 10) : 0,
-        votes_yes: 0,
-        votes_total: 0,
-        workspace_id: workspace?.id || 'a0000000-0000-0000-0000-000000000001',
-      };
+  const handleCreateEvent = async (newEvent: EventItem) => {
+    if (!workspace?.id) {
+      toast.error('Workspace indisponível. Recarregue a página antes de criar o evento.');
+      return;
+    }
+    // Mantém o insert desacoplado do estado da interface. Inclua apenas
+    // colunas persistidas em `events` — estados como `isVotingClosed` não vão ao banco.
+    const payloadDoBanco = {
+      id: newEvent.id || crypto.randomUUID(),
+      title: newEvent.title || 'Evento sem título',
+      category: newEvent.category || 'Geral',
+      status: newEvent.status || 'PROPOSAL',
+      date: newEvent.date || null,
+      time: newEvent.time || null,
+      location: newEvent.location || null,
+      contact_name: newEvent.contactName || null,
+      contact_phone: newEvent.contactPhone || null,
+      notes: newEvent.notes || null,
+      dress_code: newEvent.dressCode || null,
+      mic_count: newEvent.microphonesCount || 4,
+      schedule: newEvent.schedule || [],
+      drivers: newEvent.drivers || [],
+      passengers: newEvent.passengers || [],
+      votes_yes: newEvent.votesCount?.yes ?? 1,
+      votes_total: newEvent.votesCount?.total ?? 7,
+      voting_deadline: newEvent.votingDeadline || null,
+      workspace_id: workspace.id,
+    };
 
-      const { data, error } = await supabase!
+    if (!supabase || !isSupabaseConfigured) {
+      setEvents((prev) => [{ ...newEvent, id: payloadDoBanco.id }, ...prev]);
+      toast.success('✨ Evento cadastrado localmente!');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
         .from('events')
-        .insert([payloadLimpo])
+        .insert([payloadDoBanco])
         .select()
         .single();
 
-      if (error) {
-        console.error("ERRO AO SALVAR NO BANCO:", error);
-        alert(`Erro: ${error.message}`);
+      if (error || !data) {
+        console.error('ERRO AO SALVAR NO BANCO:', error);
+        toast.error(error?.message || 'Não foi possível salvar o evento.');
         return;
       }
 
-      setEvents((prev) => [...prev, data]);
+      const createdEvent: EventItem = {
+        id: data.id,
+        title: data.title,
+        category: data.category,
+        status: data.status,
+        date: data.date || undefined,
+        time: data.time || undefined,
+        location: data.location || undefined,
+        contactName: data.contact_name || undefined,
+        contactPhone: data.contact_phone || undefined,
+        notes: data.notes || undefined,
+        dressCode: data.dress_code || undefined,
+        microphonesCount: data.mic_count || 4,
+        schedule: Array.isArray(data.schedule) ? data.schedule : [],
+        drivers: Array.isArray(data.drivers) ? data.drivers : [],
+        passengers: Array.isArray(data.passengers) ? data.passengers : [],
+        votesCount: data.status === 'PROPOSAL' ? { yes: data.votes_yes ?? 1, total: data.votes_total ?? 7 } : undefined,
+        userVoted: false,
+        votingDeadline: data.voting_deadline || undefined,
+        isVotingClosed: false,
+      };
+
+      setEvents((prev) => [createdEvent, ...prev]);
+      toast.success('✨ Evento cadastrado com sucesso!');
     } catch (err) {
-      console.error("Erro no trycatch de criação:", err);
+      console.error('Erro ao criar evento:', err);
+      toast.error('Ocorreu um erro inesperado ao salvar o evento.');
     }
   };
 
   const handleUpdateEvent = async (updatedEvent: EventItem) => {
+    if (!workspace?.id) return;
     setEvents((prev) => prev.map((e) => (e.id === updatedEvent.id ? updatedEvent : e)));
     if (selectedNotionEvent && selectedNotionEvent.id === updatedEvent.id) {
       setSelectedNotionEvent(updatedEvent);
@@ -587,12 +612,16 @@ export default function WorkspaceAgendaPage() {
         votes_yes: updatedEvent.votesCount?.yes ?? 1,
         votes_total: updatedEvent.votesCount?.total ?? 9,
         voting_deadline: updatedEvent.votingDeadline || null,
-        workspace_id: workspace?.id || 'a0000000-0000-0000-0000-000000000001',
+        workspace_id: workspace.id,
       });
     }
   };
 
   const handleAddSong = async (newSong: SongItem) => {
+    if (!workspace?.id) {
+      toast.error('Workspace indisponível. Recarregue a página antes de criar a música.');
+      return;
+    }
     const payloadDoBanco = {
       id: newSong.id || `song-${Date.now()}`,
       title: newSong.title || 'Sem título',
@@ -603,6 +632,7 @@ export default function WorkspaceAgendaPage() {
       status: newSong.status || 'REHEARSING',
       general_drive_url: newSong.generalDriveFolderUrl || null,
       sheet_music_url: newSong.sheetMusicUrl || null,
+      workspace_id: workspace.id,
     };
 
     if (supabase && isSupabaseConfigured) {
@@ -613,17 +643,18 @@ export default function WorkspaceAgendaPage() {
         .single();
 
       if (error) {
-        console.error("ERRO COMPLETO DO SUPABASE:", error);
-        alert(`Erro ao salvar: ${error.message}`);
+        console.error('song_create_failed', error.code || 'database_error');
+        toast.error('Não foi possível salvar a música.');
         return;
       }
 
-      let voiceKits = newSong.voiceKits || [];
+      const voiceKits = newSong.voiceKits || [];
       if (voiceKits.length > 0) {
         const kitsToInsert = voiceKits.map((vk) => ({
           song_id: data.id,
           label: vk.label,
           drive_url: vk.driveUrl,
+          workspace_id: workspace.id,
         }));
         await supabase.from('song_voice_kits').insert(kitsToInsert);
       }
@@ -651,6 +682,7 @@ export default function WorkspaceAgendaPage() {
   };
 
   const handleUpdateSong = async (updatedSong: SongItem) => {
+    if (!workspace?.id) return;
     setSongs((prev) => prev.map((s) => (s.id === updatedSong.id ? updatedSong : s)));
     toast.success('✨ Alterações da música salvas!');
     if (supabase) {
@@ -664,14 +696,20 @@ export default function WorkspaceAgendaPage() {
         status: updatedSong.status,
         general_drive_url: updatedSong.generalDriveFolderUrl || null,
         sheet_music_url: updatedSong.sheetMusicUrl || null,
+        workspace_id: workspace.id,
       });
 
       if (updatedSong.voiceKits && updatedSong.voiceKits.length > 0) {
-        await supabase.from('song_voice_kits').delete().eq('song_id', updatedSong.id);
+        await supabase
+          .from('song_voice_kits')
+          .delete()
+          .eq('song_id', updatedSong.id)
+          .eq('workspace_id', workspace.id);
         const kitsToInsert = updatedSong.voiceKits.map((vk) => ({
           song_id: updatedSong.id,
           label: vk.label,
           drive_url: vk.driveUrl,
+          workspace_id: workspace.id,
         }));
         await supabase.from('song_voice_kits').insert(kitsToInsert);
       }
@@ -679,6 +717,10 @@ export default function WorkspaceAgendaPage() {
   };
 
   const handleAddTask = async (newTask: TaskItem) => {
+    if (!workspace?.id) {
+      toast.error('Workspace indisponível. Recarregue a página antes de criar a tarefa.');
+      return;
+    }
     const payloadDoBanco = {
       id: newTask.id || `task-${Date.now()}`,
       description: newTask.description || 'Sem descrição',
@@ -686,6 +728,7 @@ export default function WorkspaceAgendaPage() {
       due_date: newTask.dueDate || null,
       is_done: Boolean(newTask.isDone),
       assigned_to: newTask.assignedTo || null,
+      workspace_id: workspace.id,
     };
 
     if (supabase && isSupabaseConfigured) {
@@ -696,8 +739,8 @@ export default function WorkspaceAgendaPage() {
         .single();
 
       if (error) {
-        console.error("ERRO COMPLETO DO SUPABASE:", error);
-        alert(`Erro ao salvar: ${error.message}`);
+        console.error('task_create_failed', error.code || 'database_error');
+        toast.error('Não foi possível salvar a tarefa.');
         return;
       }
 
@@ -720,6 +763,7 @@ export default function WorkspaceAgendaPage() {
   };
 
   const handleUpdateTask = async (updatedTask: TaskItem) => {
+    if (!workspace?.id) return;
     setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
     toast.success('✨ Alterações da tarefa salvas!');
     if (supabase) {
@@ -730,16 +774,19 @@ export default function WorkspaceAgendaPage() {
         due_date: updatedTask.dueDate || null,
         is_done: updatedTask.isDone,
         assigned_to: updatedTask.assignedTo || null,
+        workspace_id: workspace.id,
       });
     }
   };
 
   const handleDeleteEvent = async (idParaDeletar: string) => {
+    if (!supabase || !workspace?.id || !canCreate) return;
     try {
-      const { data, error } = await supabase!
+      const { data, error } = await supabase
         .from('events')
         .delete()
         .eq('id', idParaDeletar)
+        .eq('workspace_id', workspace.id)
         .select();
 
       if (error || !data || data.length === 0) {
@@ -763,13 +810,18 @@ export default function WorkspaceAgendaPage() {
     if (!songId) return;
 
     try {
-      if (supabase && isSupabaseConfigured) {
-        await supabase.from('song_voice_kits').delete().eq('song_id', songId);
+      if (supabase && isSupabaseConfigured && workspace?.id) {
+        await supabase
+          .from('song_voice_kits')
+          .delete()
+          .eq('song_id', songId)
+          .eq('workspace_id', workspace.id);
 
         const { data, error } = await supabase
           .from('songs')
           .delete()
           .eq('id', songId)
+          .eq('workspace_id', workspace.id)
           .select();
 
         if (error || !data || data.length === 0) {
@@ -795,11 +847,12 @@ export default function WorkspaceAgendaPage() {
     if (!taskId) return;
 
     try {
-      if (supabase && isSupabaseConfigured) {
+      if (supabase && isSupabaseConfigured && workspace?.id) {
         const { data, error } = await supabase
           .from('tasks')
           .delete()
           .eq('id', taskId)
+          .eq('workspace_id', workspace.id)
           .select();
 
         if (error || !data || data.length === 0) {
@@ -1140,7 +1193,7 @@ export default function WorkspaceAgendaPage() {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1">
                   <button
                     onClick={() => setAgendaFilter('ALL')}
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -1159,7 +1212,7 @@ export default function WorkspaceAgendaPage() {
                         : 'bg-gray-100 text-slate-600 dark:bg-ellos-navy-sidebar dark:text-gray-300'
                     }`}
                   >
-                    Confirmados ({events.filter((e) => e.status === 'CONFIRMED').length})
+                    <span className="hidden sm:inline">Confirmados </span>({events.filter((e) => e.status === 'CONFIRMED').length})
                   </button>
                   <button
                     onClick={() => setAgendaFilter('PROPOSAL')}
@@ -1169,7 +1222,7 @@ export default function WorkspaceAgendaPage() {
                         : 'bg-gray-100 text-slate-600 dark:bg-ellos-navy-sidebar dark:text-gray-300'
                     }`}
                   >
-                    Votação ({events.filter((e) => e.status === 'PROPOSAL').length})
+                    <span className="hidden sm:inline">Votação </span>({events.filter((e) => e.status === 'PROPOSAL').length})
                   </button>
                 </div>
 
@@ -1374,7 +1427,6 @@ export default function WorkspaceAgendaPage() {
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         currentMember={currentMember}
-        onUpdateMembersList={setMembersList}
         workspaceId={workspace?.id}
         canManage={canCreate}
       />

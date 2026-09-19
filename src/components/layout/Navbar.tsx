@@ -42,7 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/90 dark:bg-[#0F223D]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-theme-primary/20 shadow-sm transition-colors duration-200 shrink-0">
+    <header className="sticky top-0 z-40 w-full bg-white/90 dark:bg-[#0F223D]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-theme-primary/20 shadow-sm transition-colors duration-200 md:pl-16 lg:pl-64 shrink-0">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3 py-3">
         
         {/* Esquerda: Logo Dinâmico do Workspace */}
@@ -69,6 +69,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={item.id}
                 onClick={() => item.tabId && onTabChange(item.tabId)}
+                aria-current={isActive ? 'page' : undefined}
                 className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border-b-2 cursor-pointer ${
                   isActive
                     ? 'text-navy-900 dark:text-theme-primary border-navy-900 dark:border-theme-primary font-bold bg-white/60 dark:bg-transparent'

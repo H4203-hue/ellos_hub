@@ -86,7 +86,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 GRANT SELECT, UPDATE ON public.profiles TO authenticated;
 
-CREATE POLICY "profiles_select_self_or_workspace_peer"
+CREATE POLICY "profiles_select_self_or_workspace_admin"
 ON public.profiles FOR SELECT
 TO authenticated
 USING (
@@ -97,6 +97,8 @@ USING (
     JOIN public.workspace_members wm_target
       ON wm_target.workspace_id = wm_self.workspace_id
     WHERE wm_self.user_id = auth.uid()
+      AND wm_self.role IN ('OWNER', 'ADMIN')
+      AND wm_self.is_active = true
       AND wm_target.user_id = public.profiles.id
   )
 );
@@ -224,10 +226,9 @@ USING (public.get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN'));
 
 
 -- =========================================================
--- EVENT_RESPONSES (RSVP) — member_id hoje é TEXT livre, sem FK pra
--- auth.users, então a policy de escrita não valida "é o próprio usuário
--- respondendo", só "é membro do workspace do evento". Ownership real de
--- RSVP fica pendente pra quando member_id virar FK de auth.users.id.
+-- EVENT_RESPONSES (RSVP) — member_id ainda é TEXT, mas contém o UUID do
+-- Auth. A comparação explícita impede um integrante de responder em nome de
+-- outro enquanto a migração definitiva da coluna para UUID não acontece.
 -- =========================================================
 ALTER TABLE public.event_responses ENABLE ROW LEVEL SECURITY;
 
@@ -239,16 +240,28 @@ USING (public.get_user_workspace_role(workspace_id) IS NOT NULL);
 
 CREATE POLICY "event_responses_insert_workspace_member"
 ON public.event_responses FOR INSERT TO authenticated
-WITH CHECK (public.get_user_workspace_role(workspace_id) IS NOT NULL);
+WITH CHECK (
+  public.get_user_workspace_role(workspace_id) IS NOT NULL
+  AND member_id = auth.uid()::text
+);
 
-CREATE POLICY "event_responses_update_admin_owner"
+CREATE POLICY "event_responses_update_own_or_admin"
 ON public.event_responses FOR UPDATE TO authenticated
-USING (public.get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN'))
-WITH CHECK (public.get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN'));
+USING (
+  member_id = auth.uid()::text
+  OR public.get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN')
+)
+WITH CHECK (
+  member_id = auth.uid()::text
+  OR public.get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN')
+);
 
-CREATE POLICY "event_responses_delete_admin_owner"
+CREATE POLICY "event_responses_delete_own_or_admin"
 ON public.event_responses FOR DELETE TO authenticated
-USING (public.get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN'));
+USING (
+  member_id = auth.uid()::text
+  OR public.get_user_workspace_role(workspace_id) IN ('OWNER', 'ADMIN')
+);
 
 -- invite_tokens fica de fora deste arquivo de propósito: ainda não tem
 -- workspace_id (ganha isso no Pilar 2, quando o convite for reconstruído

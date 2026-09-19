@@ -169,6 +169,22 @@ export const MonthlyCalendarView: React.FC<MonthlyCalendarViewProps> = ({
         </div>
       </div>
 
+      {events.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-theme-primary/30 bg-slate-50/80 dark:bg-navy-950/30 px-4 py-5 text-center">
+          <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Sua agenda está livre neste momento.</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Quando houver um compromisso, ele aparecerá diretamente no calendário.</p>
+          {canCreate && onOpenAddModal && (
+            <button
+              onClick={onOpenAddModal}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-theme-primary px-3 py-2 text-xs font-extrabold text-slate-950 transition-opacity hover:opacity-85"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Criar primeiro evento
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Dias da Semana (Header Desktop & Mobile) */}
       <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 dark:text-theme-primary/80">
         {/* Desktop Header */}
